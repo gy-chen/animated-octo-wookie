@@ -1,21 +1,29 @@
 package tw.edu.nutc.laalaa.note.views;
 
+import java.util.LinkedList;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.widget.ImageView;
 
 public class FracCanvas extends ImageView {
 
 	private final String TAG = "FracCanvas";
+	
+	private final LinkedList<Path> mPaths = new LinkedList<Path>();
+	private Path mCurrentPath = null;
 
 	private Paint mPaint;
 
 	{
 		mPaint = new Paint();
-		mPaint.setTextAlign(Paint.Align.CENTER);
+		mPaint.setStyle(Paint.Style.STROKE);
+		mPaint.setStrokeWidth(5f);
 	}
 
 	public FracCanvas(Context context) {
@@ -39,7 +47,35 @@ public class FracCanvas extends ImageView {
 		Log.d(TAG, "onDraw");
 
 		canvas.drawColor(0xffffff66);
-		canvas.drawText("FracCanvas", getWidth() / 2, getHeight() / 2, mPaint);
+		for (Path path : mPaths) {
+			canvas.drawPath(path, mPaint);
+		}
+	}
+	
+	@Override
+	public boolean onTouchEvent(MotionEvent event) {
+		Log.d(TAG, String.format("%s onTouchEvent", getId()));
+		
+		int action = event.getAction();
+		switch(action) {
+		case MotionEvent.ACTION_DOWN:
+			if (mCurrentPath == null) {
+				mCurrentPath = new Path();
+				mCurrentPath.moveTo(event.getX(), event.getY());
+				mPaths.add(mCurrentPath);
+			}
+			break;
+		case MotionEvent.ACTION_MOVE:
+			assert mCurrentPath != null;
+			mCurrentPath.lineTo(event.getX(), event.getY());
+			invalidate();
+			break;
+		case MotionEvent.ACTION_UP:
+		case MotionEvent.ACTION_CANCEL:
+			mCurrentPath = null;
+			break;
+		}
+		return true;
 	}
 
 	@Override
