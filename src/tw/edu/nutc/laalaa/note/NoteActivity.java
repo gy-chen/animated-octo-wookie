@@ -17,9 +17,9 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
-public class MainActivity extends Activity {
+public class NoteActivity extends Activity {
 
-	//private final String TAG = "NoteActivity";
+	// private final String TAG = "NoteActivity";
 
 	private LinearLayout mLayout;
 	private CustomScrollView mScrollView;
@@ -34,18 +34,18 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		// 當開始繪圖時，停止ScrollView滑動
 		mOnDrawListener = new FracCanvas.OnDrawListener() {
-			
+
 			@Override
 			public void onStopDraw() {
 				mScrollView.setScrollingEnabled(true);
 			}
-			
+
 			@Override
 			public void onStartDraw() {
-				mScrollView.setScrollingEnabled(false);				
+				mScrollView.setScrollingEnabled(false);
 			}
 		};
 
@@ -85,7 +85,8 @@ public class MainActivity extends Activity {
 	 * 
 	 * 丟入的筆記物件型態不合法時，丟出IllegalArgumentException
 	 * 
-	 * @param type 筆記物件型態
+	 * @param type
+	 *            筆記物件型態
 	 */
 	protected void addView(int type) {
 		switch (type) {

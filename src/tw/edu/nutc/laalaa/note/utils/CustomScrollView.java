@@ -34,6 +34,7 @@ public class CustomScrollView extends ScrollView {
 		return scrollable;
 	}
 
+	/*
 	@Override
 	public boolean onTouchEvent(MotionEvent ev) {
 		switch (ev.getAction()) {
@@ -46,7 +47,7 @@ public class CustomScrollView extends ScrollView {
 		default:
 			return super.onTouchEvent(ev);
 		}
-	}
+	}*/
 
 	@Override
 	public boolean onInterceptTouchEvent(MotionEvent ev) {
