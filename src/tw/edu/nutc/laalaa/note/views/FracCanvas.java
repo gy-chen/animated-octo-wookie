@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -17,7 +18,7 @@ import android.widget.ImageView;
  * 可使用觸控繪圖的畫布
  * 
  * @author Guanyuo <gy.chen@gms.nutc.edu.tw>
- *
+ * 
  */
 public class FracCanvas extends ImageView {
 
@@ -25,6 +26,7 @@ public class FracCanvas extends ImageView {
 
 	private final LinkedList<Path> mPaths = new LinkedList<Path>();
 	private Path mCurrentPath = null;
+	private RectF mBounds;
 	private boolean mIsDrawing = false;
 	private OnDrawListener mOnDrawListener;
 
@@ -60,7 +62,7 @@ public class FracCanvas extends ImageView {
 		Log.d(TAG, "Check Drawing status " + mIsDrawing);
 		return mIsDrawing;
 	}
-	
+
 	/**
 	 * 新增繪圖事件Listener
 	 * 
@@ -71,7 +73,7 @@ public class FracCanvas extends ImageView {
 	public void setOnDrawListener(OnDrawListener listener) {
 		mOnDrawListener = listener;
 	}
-	
+
 	/**
 	 * 取得目前的繪圖事件Listener
 	 * 
@@ -91,6 +93,8 @@ public class FracCanvas extends ImageView {
 		for (Path path : mPaths) {
 			canvas.drawPath(path, mPaint);
 		}
+		
+		canvas.drawRect(mBounds, mPaint);
 	}
 
 	@Override
@@ -129,21 +133,43 @@ public class FracCanvas extends ImageView {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		Log.d(TAG, String.format("onMeasure: (%d, %d)", widthMeasureSpec,
-				heightMeasureSpec));
+		Log.d(TAG, String.format("onMeasure: (%d, %d)", getMeasuredWidth(),
+				getMeasuredHeight()));
 		Log.d(TAG, String.format("view size: (%d, %d", getWidth(), getHeight()));
-		setMeasuredDimension(getResources().getDisplayMetrics().widthPixels,
+		int xPadding = getPaddingLeft() + getPaddingRight();
+		setMeasuredDimension(getMeasuredWidth(),
 				getResources().getDisplayMetrics().heightPixels / 4);
+	}
+
+	@Override
+	protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+		super.onSizeChanged(w, h, oldw, oldh);
+
+		Log.i(TAG, "onSizeChanged w: " + w);
+		Log.i(TAG, "onSizeChanged h: " + h);
+		Log.i(TAG, "onSizeChanged oldw: " + oldw);
+		Log.i(TAG, "onSizeChanged oldh: " + oldh);
+
+		float xPadding = getPaddingLeft() + getPaddingRight();
+		float yPadding = getPaddingTop() + getPaddingBottom();
+
+		float ww = w - xPadding;
+		float hh = h - yPadding;
+
+		mBounds = new RectF(0, 0, ww - 1, hh - 1);
+		mBounds.offsetTo(getPaddingLeft(), getPaddingRight());
+
+		Log.i(TAG, "left: " + mBounds.left);
+		Log.i(TAG, "right: " + mBounds.right);
+		Log.i(TAG, "top: " + mBounds.top);
+		Log.i(TAG, "bottom: " + mBounds.bottom);
 	}
 
 	/**
 	 * OnDrawListener
 	 * 
-	 * onStartDraw()
-	 *   當使用者開始下筆時，會呼叫此方法
-	 * onStopDraw()
-	 *   當使用者停筆時，會呼叫此方法
-	 *   
+	 * onStartDraw() 當使用者開始下筆時，會呼叫此方法 onStopDraw() 當使用者停筆時，會呼叫此方法
+	 * 
 	 */
 	public static interface OnDrawListener {
 		void onStartDraw();
