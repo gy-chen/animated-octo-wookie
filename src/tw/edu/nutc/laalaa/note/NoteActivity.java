@@ -8,8 +8,12 @@ import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -19,7 +23,8 @@ import android.widget.ScrollView;
 
 public class NoteActivity extends Activity {
 
-	// private final String TAG = "NoteActivity";
+	private final String TAG = "NoteActivity";
+	private final int REQUEST_TAKE_PHOTO = 4413;
 
 	private LinearLayout mLayout;
 	private CustomScrollView mScrollView;
@@ -125,12 +130,12 @@ public class NoteActivity extends Activity {
 
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	protected void addPhoto() {
-		FracImageView view = new FracImageView(this);
-		view.setImageResource(R.drawable.p1);
-		int viewId = View.generateViewId();
-		mViewIds.add(viewId);
-		view.setId(viewId);
-		addView(view);
+		// start a intent for take a photo
+		Intent intent = new Intent();
+		intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+		if (intent.resolveActivity(getPackageManager()) != null) {
+			startActivityForResult(intent, REQUEST_TAKE_PHOTO);
+		}
 	}
 
 	protected void addView(View view) {
@@ -143,6 +148,22 @@ public class NoteActivity extends Activity {
 				mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
 			}
 		}, 50);
+	}
+
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+			Log.d(TAG, "Receive a bitmap from other activity");
+			Bundle extras = data.getExtras();
+			Bitmap imageBitmap = (Bitmap) extras.get("data");
+			FracImageView view = new FracImageView(this);
+			view.setImageBitmap(imageBitmap);
+			int viewId = View.generateViewId();
+			mViewIds.add(viewId);
+			view.setId(viewId);
+			addView(view);
+		}
 	}
 
 	@Override
