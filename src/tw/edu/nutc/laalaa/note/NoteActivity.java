@@ -1,16 +1,15 @@
 package tw.edu.nutc.laalaa.note;
 
 import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
-import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -30,6 +29,7 @@ public class NoteActivity extends Activity {
 	private CustomScrollView mScrollView;
 	private ArrayList<Integer> mViewIds = new ArrayList<Integer>();
 	private FracCanvas.OnDrawListener mOnDrawListener;
+	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
 
 	protected final int TYPE_EDITTEXT = 1;
 	protected final int TYPE_CANVAS = 2;
@@ -109,26 +109,23 @@ public class NoteActivity extends Activity {
 		}
 	}
 
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	protected void addEditText() {
 		FracEditText view = new FracEditText(this);
-		int viewId = View.generateViewId();
+		int viewId = generateViewId();
 		mViewIds.add(viewId);
 		view.setId(viewId);
 		addView(view);
 	}
 
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	protected void addCanvas() {
 		FracCanvas view = new FracCanvas(this);
 		view.setOnDrawListener(mOnDrawListener);
-		int viewId = View.generateViewId();
+		int viewId = generateViewId();
 		mViewIds.add(viewId);
 		view.setId(viewId);
 		addView(view);
 	}
 
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	protected void addPhoto() {
 		// start a intent for take a photo
 		Intent intent = new Intent();
@@ -150,7 +147,6 @@ public class NoteActivity extends Activity {
 		}, 50);
 	}
 
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
@@ -159,11 +155,20 @@ public class NoteActivity extends Activity {
 			Bitmap imageBitmap = (Bitmap) extras.get("data");
 			FracImageView view = new FracImageView(this);
 			view.setImageBitmap(imageBitmap);
-			int viewId = View.generateViewId();
+			int viewId = generateViewId();
 			mViewIds.add(viewId);
 			view.setId(viewId);
 			addView(view);
 		}
+	}
+
+	/**
+	 * 產生View的Id
+	 * 
+	 * @return
+	 */
+	private int generateViewId() {
+		return mCounter.getAndIncrement();
 	}
 
 	@Override
