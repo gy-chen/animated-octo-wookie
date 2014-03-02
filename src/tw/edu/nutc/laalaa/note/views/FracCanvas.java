@@ -87,9 +87,9 @@ public class FracCanvas extends ImageView {
 
 	@Override
 	public void onDraw(Canvas canvas) {
-		super.onDraw(canvas);
-
 		canvas.drawColor(0xffffff66);
+		super.onDraw(canvas);
+		
 		for (Path path : mPaths) {
 			canvas.drawPath(path, mPaint);
 		}
@@ -136,7 +136,7 @@ public class FracCanvas extends ImageView {
 		Log.d(TAG, String.format("onMeasure: (%d, %d)", getMeasuredWidth(),
 				getMeasuredHeight()));
 		Log.d(TAG, String.format("view size: (%d, %d", getWidth(), getHeight()));
-		int xPadding = getPaddingLeft() + getPaddingRight();
+		
 		setMeasuredDimension(getMeasuredWidth(),
 				getResources().getDisplayMetrics().heightPixels / 4);
 	}
