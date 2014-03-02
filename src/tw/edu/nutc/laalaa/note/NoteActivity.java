@@ -269,14 +269,14 @@ public class NoteActivity extends Activity {
 		}
 	}
 
-	protected void addEditText() {
+	private void addEditText() {
 		FracEditText view = new FracEditText(this);
 		int viewId = generateViewId();
 		view.setId(viewId);
 		addView(view);
 	}
 
-	protected void addCanvas() {
+	private void addCanvas() {
 		FracCanvas view = new FracCanvas(this);
 		view.setDrawingCacheEnabled(true);
 		view.setOnDrawListener(mOnDrawListener);
@@ -285,7 +285,7 @@ public class NoteActivity extends Activity {
 		addView(view);
 	}
 
-	protected void addPhoto() {
+	private void addPhoto() {
 		// start a intent for take a photo
 		Intent intent = new Intent();
 		intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
