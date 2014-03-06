@@ -1,9 +1,14 @@
 package tw.edu.nutc.laalaa.note.datastore;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Base64;
 import android.util.Log;
 
 /**
@@ -21,6 +26,13 @@ public class NoteStorage {
 	public final static int TYPE_EDITTEXT = 1;
 	public final static int TYPE_CANVAS = 2;
 	public final static int TYPE_PHOTO = 3;
+
+	private final static String KEY_TIMESTAMP = "timestamp";
+	private final static String KEY_TITLE = "title";
+	private final static String KEY_CONTENTS = "contents";
+	private final static String KEY_INDEX = "index";
+	private final static String KEY_CONTENT = "content";
+	private final static String KEY_TYPE = "type";
 
 	public NoteStorage(Context context, long timestamp) {
 		Log.d(TAG, "received timestamp: " + timestamp);
@@ -132,5 +144,58 @@ public class NoteStorage {
 
 		Log.d(TAG, "New note id: " + rowId);
 		assert rowId == mTimestamp;
+	}
+
+	/**
+	 * 將此註記簿轉換成JSON格式
+	 * 
+	 * 輸出的JSON格式為：
+	 *   {"timestamp": 筆記簿的timestamp,
+	 *    "title": 筆記簿標題
+	 *    "content": [{ "index": 筆記順序, "content": 筆記內容, "type": 筆記種類},
+	 *     ...]
+	 *   }
+	 * 筆記種類的代表意義為：
+	 *   1: 文字
+	 *   2: 畫布
+	 *   3: 相片
+	 * 筆記內容皆用Base64轉換成ASCII可編碼內容。
+	 * 
+	 * @return JSON字串
+	 */
+	public String toJSON() {
+		try {
+			JSONObject mainJson = new JSONObject();
+
+			mainJson.put(KEY_TIMESTAMP, mTimestamp);
+			String noteTitle = getTitle();
+			mainJson.put(KEY_TITLE, noteTitle == null ? JSONObject.NULL : noteTitle);
+
+			JSONArray contentsJson = new JSONArray();
+			Cursor contentCursor = getNoteContents();
+			if (contentCursor.moveToFirst()) {
+				do {
+					JSONObject contentJson = new JSONObject();
+					int contentIndex = contentCursor
+							.getColumnIndex(NoteOpenHelper.NoteContentEntry.COLUMN_NAME_CONTENT);
+					int typeIndex = contentCursor
+							.getColumnIndex(NoteOpenHelper.NoteContentEntry.COLUMN_NAME_TYPE);
+					String type = contentCursor.getString(typeIndex);
+					byte[] bytes = contentCursor.getBlob(contentIndex);
+					contentJson.put(KEY_INDEX, contentCursor.getPosition());
+					contentJson.put(KEY_TYPE, type);
+					contentJson.put(KEY_CONTENT,
+							Base64.encodeToString(bytes, Base64.DEFAULT));
+					contentsJson.put(contentJson);
+				} while (contentCursor.moveToNext());
+			}
+
+			mainJson.put(KEY_CONTENTS, contentsJson);
+			return mainJson.toString();
+		} catch (JSONException e) {
+			e.printStackTrace();
+			assert false;
+			return null;
+		}
 	}
 }

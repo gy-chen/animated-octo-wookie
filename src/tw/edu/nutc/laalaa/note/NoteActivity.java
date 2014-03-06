@@ -177,6 +177,7 @@ public class NoteActivity extends Activity {
 		}
 
 		Log.d(TAG, "onStop: saved");
+		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
 	}
 
 	private void addEditTextToStorage(FracEditText view) {
