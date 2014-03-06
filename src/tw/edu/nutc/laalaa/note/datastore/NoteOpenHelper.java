@@ -20,7 +20,7 @@ public class NoteOpenHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL("CREATE TABLE Note (_id TIMESTAMP NOT NULL PRIMARY KEY, title VARCHAR(45));");
-		db.execSQL("CREATE TABLE NoteContent (_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, content BLOB NOT NULL, type INT NOT NULL, note_id TIMESTAMP NOT NULL, FOREIGN KEY (note_id) REFERENCES Note (id) ON DELETE CASCADE ON UPDATE CASCADE);");
+		db.execSQL("CREATE TABLE NoteContent (_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, content BLOB NOT NULL, type INT NOT NULL, note_id TIMESTAMP NOT NULL, FOREIGN KEY (note_id) REFERENCES Note (_id) ON DELETE CASCADE ON UPDATE CASCADE);");
 	}
 
 	@Override
