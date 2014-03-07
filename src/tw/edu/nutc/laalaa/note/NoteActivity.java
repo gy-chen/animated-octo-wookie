@@ -31,6 +31,8 @@ import android.widget.ScrollView;
 
 public class NoteActivity extends Activity {
 
+	public final static String EXTRA_NOTE_TIMESTAMP = "timestamp";
+
 	private final String TAG = "NoteActivity";
 	private final int REQUEST_TAKE_PHOTO = 4413;
 
@@ -92,7 +94,7 @@ public class NoteActivity extends Activity {
 
 		// 初始化註記資料庫
 		// initNoteStorage((new Date()).getTime());
-		initNoteStorage(1393594645799l);
+		initNoteStorage(getIntent().getLongExtra(EXTRA_NOTE_TIMESTAMP, 1393594645799l));
 		// mNoteStorage.setTitle("Demo");
 		// Log.d(TAG, "Note title: " + mNoteStorage.getTitle());
 
