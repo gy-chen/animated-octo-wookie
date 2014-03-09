@@ -25,6 +25,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewStub;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -42,6 +44,7 @@ public class NoteActivity extends Activity {
 	private FracCanvas.OnDrawListener mOnDrawListener;
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
+	private View mEditTextSetting;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -92,15 +95,49 @@ public class NoteActivity extends Activity {
 			}
 		});
 
+		Button menuButton = (Button) findViewById(R.id.menu_test);
+		menuButton.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				if (mEditTextSetting == null) {
+					ViewStub viewstub = (ViewStub) findViewById(R.id.viewstub);
+					viewstub.setVisibility(View.VISIBLE);
+					mEditTextSetting = findViewById(R.id.edittext_setting_view);
+				} else {
+					mEditTextSetting.setVisibility(mEditTextSetting
+							.getVisibility() == View.VISIBLE ? View.INVISIBLE
+							: View.VISIBLE);
+				}
+
+				// animation
+				if (mEditTextSetting.getVisibility() == View.VISIBLE) {
+					mEditTextSetting.startAnimation(AnimationUtils
+							.loadAnimation(NoteActivity.this, R.anim.fade_in));
+				} else {
+					mEditTextSetting.startAnimation(AnimationUtils
+							.loadAnimation(NoteActivity.this, R.anim.fade_out));
+				}
+			}
+		});
+
 		// 初始化註記資料庫
 		// initNoteStorage((new Date()).getTime());
-		initNoteStorage(getIntent().getLongExtra(EXTRA_NOTE_TIMESTAMP, 1393594645799l));
+		initNoteStorage(getIntent().getLongExtra(EXTRA_NOTE_TIMESTAMP,
+				1393594645799l));
 		// mNoteStorage.setTitle("Demo");
 		// Log.d(TAG, "Note title: " + mNoteStorage.getTitle());
 
 		// 讀回資料庫內容
 		loadNoteStorageContent();
 	}
+
+	/*
+	 * @Override public boolean onPrepareOptionsMenu(Menu menu) {
+	 * super.onPrepareOptionsMenu(menu); menu.clear(); MenuInflater inflater =
+	 * getMenuInflater(); inflater.inflate(mMenuRes, menu); Log.d(TAG,
+	 * "onPrepareOptionsMenu"); return true; }
+	 */
 
 	private void loadNoteStorageContent() {
 		Cursor c = mNoteStorage.getNoteContents();
