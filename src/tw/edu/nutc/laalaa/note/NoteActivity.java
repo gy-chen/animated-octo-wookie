@@ -17,6 +17,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -44,7 +45,45 @@ public class NoteActivity extends Activity {
 	private FracCanvas.OnDrawListener mOnDrawListener;
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
-	private View mEditTextSetting;
+	private View mCanvasSetting;
+
+	/**
+	 * 當選擇顏色的按鈕被按下時觸發的事件
+	 * 
+	 * @param view
+	 */
+	public void onCanvasChooseColorButtonClick(View view) {
+		int viewId = view.getId();
+		Paint newPaint;
+		switch (viewId) {
+		case R.id.button_red_color:
+			newPaint = FracCanvas.RED_PAINT;
+			break;
+		case R.id.button_blue_color:
+			newPaint = FracCanvas.BLUE_PAINT;
+			break;
+		case R.id.button_yellow_color:
+			newPaint = FracCanvas.YELLOW_PAINT;
+			break;
+		case R.id.button_green_color:
+			newPaint = FracCanvas.GREEN_PAINT;
+			break;
+		case R.id.button_orange_color:
+			newPaint = FracCanvas.ORANGE_PAINT;
+			break;
+		case R.id.button_purple_color:
+			newPaint = FracCanvas.PURPLE_PAINT;
+			break;
+		case R.id.button_black_color:
+			newPaint = FracCanvas.BLACK_PAINT;
+			break;
+		default:
+			newPaint = FracCanvas.BLACK_PAINT;
+			Log.w(TAG, "Unknown view call onChooseColorButtonClick method");
+		}
+		FracCanvas.setCurrentPaint(newPaint);
+		toggleCanvasSettingMenu();
+	}
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -100,24 +139,7 @@ public class NoteActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				if (mEditTextSetting == null) {
-					ViewStub viewstub = (ViewStub) findViewById(R.id.viewstub);
-					viewstub.setVisibility(View.VISIBLE);
-					mEditTextSetting = findViewById(R.id.edittext_setting_view);
-				} else {
-					mEditTextSetting.setVisibility(mEditTextSetting
-							.getVisibility() == View.VISIBLE ? View.INVISIBLE
-							: View.VISIBLE);
-				}
-
-				// animation
-				if (mEditTextSetting.getVisibility() == View.VISIBLE) {
-					mEditTextSetting.startAnimation(AnimationUtils
-							.loadAnimation(NoteActivity.this, R.anim.fade_in));
-				} else {
-					mEditTextSetting.startAnimation(AnimationUtils
-							.loadAnimation(NoteActivity.this, R.anim.fade_out));
-				}
+				toggleCanvasSettingMenu();
 			}
 		});
 
@@ -130,6 +152,31 @@ public class NoteActivity extends Activity {
 
 		// 讀回資料庫內容
 		loadNoteStorageContent();
+	}
+
+	/**
+	 * 切換畫布設定選單的顯示狀態
+	 * 
+	 */
+	public void toggleCanvasSettingMenu() {
+		if (mCanvasSetting == null) {
+			ViewStub viewstub = (ViewStub) findViewById(R.id.viewstub_canvassetting);
+			viewstub.setVisibility(View.VISIBLE);
+			mCanvasSetting = findViewById(R.id.canvas_setting_view);
+		} else {
+			mCanvasSetting
+					.setVisibility(mCanvasSetting.getVisibility() == View.VISIBLE ? View.INVISIBLE
+							: View.VISIBLE);
+		}
+
+		// animation
+		if (mCanvasSetting.getVisibility() == View.VISIBLE) {
+			mCanvasSetting.startAnimation(AnimationUtils.loadAnimation(
+					NoteActivity.this, R.anim.fade_in));
+		} else {
+			mCanvasSetting.startAnimation(AnimationUtils.loadAnimation(
+					NoteActivity.this, R.anim.fade_out));
+		}
 	}
 
 	/*

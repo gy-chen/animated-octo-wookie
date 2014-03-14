@@ -57,12 +57,12 @@
         android:text="M" />
 
     <ViewStub
-        android:id="@+id/viewstub"
+        android:id="@+id/viewstub_canvassetting"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:inflatedId="@+id/edittext_setting_view"
-        android:layout="@layout/edittext_setting" />
+        android:inflatedId="@+id/canvas_setting_view"
+        android:layout="@layout/canvas_setting" />
 
 </RelativeLayout>

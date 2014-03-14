@@ -4,6 +4,7 @@ import java.util.LinkedList;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -22,20 +23,58 @@ import android.widget.ImageView;
  */
 public class FracCanvas extends ImageView {
 
+	public final static Paint RED_PAINT;
+	public final static Paint BLUE_PAINT;
+	public final static Paint YELLOW_PAINT;
+	public final static Paint GREEN_PAINT;
+	public final static Paint ORANGE_PAINT;
+	public final static Paint PURPLE_PAINT;
+	public final static Paint BLACK_PAINT;
+
 	private final String TAG = "FracCanvas";
 
 	private final LinkedList<Path> mPaths = new LinkedList<Path>();
+	private final LinkedList<Paint> mPaints = new LinkedList<Paint>(); // Store
+																		// paints
+																		// that
+																		// map
+																		// to
+																		// paths
 	private Path mCurrentPath = null;
 	private RectF mBounds;
 	private boolean mIsDrawing = false;
 	private OnDrawListener mOnDrawListener;
 
-	private Paint mPaint;
+	private static Paint mPaint;
 
-	{
-		mPaint = new Paint();
-		mPaint.setStyle(Paint.Style.STROKE);
-		mPaint.setStrokeWidth(5f);
+	static {
+		// init paints
+		Paint initPaint = new Paint();
+		initPaint.setStyle(Paint.Style.STROKE);
+		initPaint.setStrokeWidth(5f);
+
+		RED_PAINT = new Paint(initPaint);
+		RED_PAINT.setColor(Color.RED);
+
+		BLUE_PAINT = new Paint(initPaint);
+		BLUE_PAINT.setColor(Color.BLUE);
+
+		YELLOW_PAINT = new Paint(initPaint);
+		YELLOW_PAINT.setColor(Color.YELLOW);
+
+		GREEN_PAINT = new Paint(initPaint);
+		GREEN_PAINT.setColor(Color.GREEN);
+
+		ORANGE_PAINT = new Paint(initPaint);
+		ORANGE_PAINT.setColor(0xffed5594);
+
+		PURPLE_PAINT = new Paint(initPaint);
+		PURPLE_PAINT.setColor(0xff92268e);
+
+		BLACK_PAINT = new Paint(initPaint);
+		BLACK_PAINT.setColor(Color.BLACK);
+
+		mPaint = BLACK_PAINT;
 	}
 
 	public FracCanvas(Context context) {
@@ -51,6 +90,15 @@ public class FracCanvas extends ImageView {
 	public FracCanvas(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		// TODO Auto-generated constructor stub
+	}
+
+	/**
+	 * 設定接下來繪圖所使用的畫筆
+	 * 
+	 * @param paint
+	 */
+	public static void setCurrentPaint(Paint paint) {
+		mPaint = paint;
 	}
 
 	/**
@@ -89,12 +137,14 @@ public class FracCanvas extends ImageView {
 	public void onDraw(Canvas canvas) {
 		canvas.drawColor(0xffffff66);
 		super.onDraw(canvas);
-		
+
+		int location = 0;
 		for (Path path : mPaths) {
-			canvas.drawPath(path, mPaint);
+			canvas.drawPath(path, mPaints.get(location));
+			location += 1;
 		}
-		
-		canvas.drawRect(mBounds, mPaint);
+
+		canvas.drawRect(mBounds, BLACK_PAINT);
 	}
 
 	@Override
@@ -112,6 +162,7 @@ public class FracCanvas extends ImageView {
 				mCurrentPath = new Path();
 				mCurrentPath.moveTo(event.getX(), event.getY());
 				mPaths.add(mCurrentPath);
+				mPaints.add(mPaint);
 			}
 			break;
 		case MotionEvent.ACTION_MOVE:
@@ -136,9 +187,9 @@ public class FracCanvas extends ImageView {
 		Log.d(TAG, String.format("onMeasure: (%d, %d)", getMeasuredWidth(),
 				getMeasuredHeight()));
 		Log.d(TAG, String.format("view size: (%d, %d", getWidth(), getHeight()));
-		
-		setMeasuredDimension(getMeasuredWidth(),
-				getResources().getDisplayMetrics().heightPixels / 4);
+
+		setMeasuredDimension(getMeasuredWidth(), getResources()
+				.getDisplayMetrics().heightPixels / 4);
 	}
 
 	@Override
