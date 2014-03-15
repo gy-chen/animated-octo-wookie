@@ -23,9 +23,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnTouchListener;
 import android.view.ViewStub;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
@@ -46,6 +50,8 @@ public class NoteActivity extends Activity {
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
 	private View mCanvasSetting;
+	private GestureDetector mCanvasGestureDetector;
+	private OnTouchListener mCanvasOnTouchListener;
 
 	/**
 	 * 當選擇顏色的按鈕被按下時觸發的事件
@@ -103,6 +109,17 @@ public class NoteActivity extends Activity {
 			public void onStartDraw() {
 				Log.d(TAG, "stop scrolling");
 				mScrollView.setScrollingEnabled(false);
+			}
+		};
+		
+		// 設定畫布的選單
+		mCanvasGestureDetector = new GestureDetector(this, new CanvasOnGestureListener());
+		mCanvasOnTouchListener = new OnTouchListener() {
+			
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				mCanvasGestureDetector.onTouchEvent(event);
+				return false;
 			}
 		};
 
@@ -229,6 +246,7 @@ public class NoteActivity extends Activity {
 		FracCanvas canvas = new FracCanvas(this);
 		canvas.setImageBitmap(bitmap);
 		canvas.setOnDrawListener(mOnDrawListener);
+		canvas.setOnTouchListener(mCanvasOnTouchListener);
 		canvas.setId(generateViewId());
 		addView(canvas);
 	}
@@ -364,6 +382,7 @@ public class NoteActivity extends Activity {
 		FracCanvas view = new FracCanvas(this);
 		view.setDrawingCacheEnabled(true);
 		view.setOnDrawListener(mOnDrawListener);
+		view.setOnTouchListener(mCanvasOnTouchListener);
 		int viewId = generateViewId();
 		view.setId(viewId);
 		addView(view);
@@ -426,4 +445,12 @@ public class NoteActivity extends Activity {
 		return true;
 	}
 
+	private class CanvasOnGestureListener extends SimpleOnGestureListener {
+		
+		@Override
+		public boolean onSingleTapUp(MotionEvent e) {
+			toggleCanvasSettingMenu();
+			return true;
+		}
+	}
 }
