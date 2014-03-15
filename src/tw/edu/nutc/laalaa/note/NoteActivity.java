@@ -95,11 +95,13 @@ public class NoteActivity extends Activity {
 
 			@Override
 			public void onStopDraw() {
+				Log.d(TAG, "start scrolling");
 				mScrollView.setScrollingEnabled(true);
 			}
 
 			@Override
 			public void onStartDraw() {
+				Log.d(TAG, "stop scrolling");
 				mScrollView.setScrollingEnabled(false);
 			}
 		};
@@ -226,6 +228,7 @@ public class NoteActivity extends Activity {
 
 		FracCanvas canvas = new FracCanvas(this);
 		canvas.setImageBitmap(bitmap);
+		canvas.setOnDrawListener(mOnDrawListener);
 		canvas.setId(generateViewId());
 		addView(canvas);
 	}
