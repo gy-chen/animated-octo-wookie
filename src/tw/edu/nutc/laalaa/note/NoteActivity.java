@@ -1,11 +1,14 @@
 package tw.edu.nutc.laalaa.note;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
+import tw.edu.nutc.laalaa.note.utils.BitmapUtil;
 import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
@@ -20,9 +23,11 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.GestureDetector;
 import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.Menu;
@@ -46,12 +51,15 @@ public class NoteActivity extends Activity {
 	private LinearLayout mLayout;
 	private CustomScrollView mScrollView;
 	private ArrayList<Integer> mViewIds = new ArrayList<Integer>();
+	private SparseArray<File> mCachedPhotoFiles = new SparseArray<File>();
+	private File mCurrentCachedFile = null;
 	private FracCanvas.OnDrawListener mOnDrawListener;
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
 	private View mCanvasSetting;
 	private GestureDetector mCanvasGestureDetector;
 	private OnTouchListener mCanvasOnTouchListener;
+	private int mReqWidth;
 
 	/**
 	 * 當選擇顏色的按鈕被按下時觸發的事件
@@ -96,6 +104,9 @@ public class NoteActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
+		// set view width
+		mReqWidth = getResources().getDisplayMetrics().widthPixels;
+
 		// 當開始繪圖時，停止ScrollView滑動
 		mOnDrawListener = new FracCanvas.OnDrawListener() {
 
@@ -111,11 +122,12 @@ public class NoteActivity extends Activity {
 				mScrollView.setScrollingEnabled(false);
 			}
 		};
-		
+
 		// 設定畫布的選單
-		mCanvasGestureDetector = new GestureDetector(this, new CanvasOnGestureListener());
+		mCanvasGestureDetector = new GestureDetector(this,
+				new CanvasOnGestureListener());
 		mCanvasOnTouchListener = new OnTouchListener() {
-			
+
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
 				mCanvasGestureDetector.onTouchEvent(event);
@@ -254,7 +266,14 @@ public class NoteActivity extends Activity {
 	private void loadPhotoContent(byte[] bytes) {
 		Log.d(TAG, "load photo");
 
-		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
+		options.inSampleSize = BitmapUtil.calculateInSampleWidth(options,
+				mReqWidth);
+		options.inJustDecodeBounds = false;
+		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length,
+				options);
 
 		FracImageView photo = new FracImageView(this);
 		photo.setImageBitmap(bitmap);
@@ -310,13 +329,8 @@ public class NoteActivity extends Activity {
 
 	private void addPhotoToStorage(FracImageView view) {
 		Drawable drawable = view.getDrawable();
+		// TODO: load cached bitmap instead
 		Bitmap bitmap = convertDrawableToBitmap(drawable);
-		/*
-		 * File dir = Environment.getExternalStorageDirectory(); try { File
-		 * tempFile = File.createTempFile("demo", ".png", dir); tempFile. }
-		 * catch (IOException e) { // TODO Auto-generated catch block
-		 * e.printStackTrace(); }
-		 */
 
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
@@ -392,6 +406,15 @@ public class NoteActivity extends Activity {
 		// start a intent for take a photo
 		Intent intent = new Intent();
 		intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+		File cacheDir = getExternalCacheDir();
+		try {
+			mCurrentCachedFile = File.createTempFile("cachePhoto", ".jpg",
+					cacheDir);
+			intent.putExtra(MediaStore.EXTRA_OUTPUT,
+					Uri.fromFile(mCurrentCachedFile));
+		} catch (IOException e) {
+			Log.d(TAG, e.toString());
+		}
 		if (intent.resolveActivity(getPackageManager()) != null) {
 			startActivityForResult(intent, REQUEST_TAKE_PHOTO);
 		}
@@ -414,12 +437,29 @@ public class NoteActivity extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
 			Log.d(TAG, "Receive a bitmap from other activity");
-			Bundle extras = data.getExtras();
-			Bitmap imageBitmap = (Bitmap) extras.get("data");
 			FracImageView view = new FracImageView(this);
-			view.setImageBitmap(imageBitmap);
 			int viewId = generateViewId();
 			view.setId(viewId);
+			// use cached photo file if it is exists
+			Bitmap imageBitmap;
+			if (mCurrentCachedFile == null) {
+				Bundle extras = data.getExtras();
+				imageBitmap = (Bitmap) extras.get("data");
+			} else {
+				// downsampling
+				final BitmapFactory.Options options = new BitmapFactory.Options();
+				options.inJustDecodeBounds = true;
+				BitmapFactory.decodeFile(mCurrentCachedFile.getAbsolutePath(),
+						options);
+				options.inSampleSize = BitmapUtil.calculateInSampleWidth(
+						options, mReqWidth);
+				options.inJustDecodeBounds = false;
+				imageBitmap = BitmapFactory.decodeFile(
+						mCurrentCachedFile.getAbsolutePath(), options);
+				mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
+				mCurrentCachedFile = null;
+			}
+			view.setImageBitmap(imageBitmap);
 			addView(view);
 		}
 	}
@@ -446,7 +486,7 @@ public class NoteActivity extends Activity {
 	}
 
 	private class CanvasOnGestureListener extends SimpleOnGestureListener {
-		
+
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			toggleCanvasSettingMenu();
