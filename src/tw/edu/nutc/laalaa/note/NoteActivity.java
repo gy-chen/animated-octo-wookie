@@ -302,6 +302,12 @@ public class NoteActivity extends Activity {
 			}
 		}
 
+		// clear cached photos
+		for (int i = 0; i < mCachedPhotoFiles.size(); i++) {
+			int key = mCachedPhotoFiles.keyAt(i);
+			mCachedPhotoFiles.get(key).delete();
+		}
+		
 		Log.d(TAG, "onStop: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
 	}
