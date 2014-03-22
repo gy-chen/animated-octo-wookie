@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import tw.edu.nutc.laalaa.note.NoteActivity.DeleteCanvasDialogFragment.DeleteCanvasDialogListener;
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
 import tw.edu.nutc.laalaa.note.utils.BitmapUtil;
@@ -13,7 +14,9 @@ import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -26,6 +29,8 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.GestureDetector;
@@ -41,7 +46,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
-public class NoteActivity extends Activity {
+public class NoteActivity extends FragmentActivity {
 
 	public final static String EXTRA_NOTE_TIMESTAMP = "timestamp";
 
@@ -57,6 +62,7 @@ public class NoteActivity extends Activity {
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
 	private View mCanvasSetting;
+	private CanvasOnGestureListener mCanvasGestureListener;
 	private GestureDetector mCanvasGestureDetector;
 	private OnTouchListener mCanvasOnTouchListener;
 	private int mReqWidth;
@@ -124,12 +130,14 @@ public class NoteActivity extends Activity {
 		};
 
 		// 設定畫布的選單
+		mCanvasGestureListener = new CanvasOnGestureListener();
 		mCanvasGestureDetector = new GestureDetector(this,
-				new CanvasOnGestureListener());
+				mCanvasGestureListener);
 		mCanvasOnTouchListener = new OnTouchListener() {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
+				mCanvasGestureListener.setCurrentCanvas((FracCanvas) v);
 				mCanvasGestureDetector.onTouchEvent(event);
 				return false;
 			}
@@ -307,7 +315,7 @@ public class NoteActivity extends Activity {
 			int key = mCachedPhotoFiles.keyAt(i);
 			mCachedPhotoFiles.get(key).delete();
 		}
-		
+
 		Log.d(TAG, "onStop: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
 	}
@@ -378,27 +386,27 @@ public class NoteActivity extends Activity {
 	protected void addView(int type) {
 		switch (type) {
 		case NoteStorage.TYPE_EDITTEXT:
-			addEditText();
+			newEditText();
 			break;
 		case NoteStorage.TYPE_CANVAS:
-			addCanvas();
+			newCanvas();
 			break;
 		case NoteStorage.TYPE_PHOTO:
-			addPhoto();
+			newPhoto();
 			break;
 		default:
 			throw new IllegalArgumentException();
 		}
 	}
 
-	private void addEditText() {
+	private void newEditText() {
 		FracEditText view = new FracEditText(this);
 		int viewId = generateViewId();
 		view.setId(viewId);
 		addView(view);
 	}
 
-	private void addCanvas() {
+	private void newCanvas() {
 		FracCanvas view = new FracCanvas(this);
 		view.setDrawingCacheEnabled(true);
 		view.setOnDrawListener(mOnDrawListener);
@@ -408,7 +416,7 @@ public class NoteActivity extends Activity {
 		addView(view);
 	}
 
-	private void addPhoto() {
+	private void newPhoto() {
 		// start a intent for take a photo
 		Intent intent = new Intent();
 		intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -426,6 +434,11 @@ public class NoteActivity extends Activity {
 		}
 	}
 
+	/**
+	 * 將指定的View新增至Layout中
+	 * 
+	 * @param view
+	 */
 	protected void addView(View view) {
 		mLayout.addView(view);
 		mViewIds.add(view.getId());
@@ -437,6 +450,26 @@ public class NoteActivity extends Activity {
 				mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
 			}
 		}, 50);
+	}
+	
+	protected void deleteView(View view) {
+		// check view id
+		int viewId = view.getId();
+		int viewIndex = mViewIds.indexOf(viewId);
+		if (viewIndex == -1) {
+			Log.w(TAG, "Unknown view id: " + viewId);
+			return;
+		}
+		// remove the view from layout
+		mLayout.removeView(view);
+		mViewIds.remove(viewIndex);
+		// remove cached files of that view
+		File cachedFile = mCachedPhotoFiles.get(viewId);
+		if (cachedFile != null) {
+			cachedFile.delete();
+			mCachedPhotoFiles.remove(viewId);
+			Log.d(TAG, "remove cached photo file");
+		}
 	}
 
 	@Override
@@ -493,10 +526,90 @@ public class NoteActivity extends Activity {
 
 	private class CanvasOnGestureListener extends SimpleOnGestureListener {
 
+		private FracCanvas mCurrentCanvas;
+		private DeleteCanvasDialogListener mDeleteCanvasListener = new DeleteCanvasDialogListener() {
+			
+			@Override
+			public void onDialogPositiveClick() {
+				// delete canvas
+				FracCanvas canvas = getCurrentCanvas();
+				deleteView(canvas);
+			}
+			
+			@Override
+			public void onDialogNegativeClick() {
+				// do nothing
+			}
+		};
+
+		public void setCurrentCanvas(FracCanvas currentCanvas) {
+			mCurrentCanvas = currentCanvas;
+		}
+
+		public FracCanvas getCurrentCanvas() {
+			return mCurrentCanvas;
+		}
+
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			toggleCanvasSettingMenu();
 			return true;
+		}
+
+		@Override
+		public void onLongPress(MotionEvent event) {
+			// 跳出確認對話框
+			DeleteCanvasDialogFragment dialog = new DeleteCanvasDialogFragment();
+			dialog.setDeleteCanvasDialogListener(mDeleteCanvasListener);
+			dialog.show(getSupportFragmentManager(), "delete_dialog");
+			// 如果已確認，刪除指定畫布
+			Log.d(TAG, "canvas onLongPress: " + getCurrentCanvas().getId());
+		}
+
+	}
+
+	public static class DeleteCanvasDialogFragment extends DialogFragment {
+
+		private DeleteCanvasDialogListener mListener = null;
+
+		public interface DeleteCanvasDialogListener {
+			public void onDialogPositiveClick();
+
+			public void onDialogNegativeClick();
+		}
+
+		public void setDeleteCanvasDialogListener(
+				DeleteCanvasDialogListener listener) {
+			mListener = listener;
+		}
+
+		@Override
+		public Dialog onCreateDialog(Bundle savedInstanceState) {
+			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+			builder.setMessage(R.string.dialog_delete_canvas)
+					.setPositiveButton(R.string.confirm,
+							new DialogInterface.OnClickListener() {
+
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									if (mListener != null) {
+										mListener.onDialogPositiveClick();
+									}
+								}
+							})
+					.setNegativeButton(R.string.cancel,
+							new DialogInterface.OnClickListener() {
+
+								@Override
+								public void onClick(DialogInterface dialog,
+										int which) {
+									if (mListener != null) {
+										mListener.onDialogNegativeClick();
+									}
+								}
+							});
+			return builder.create();
 		}
 	}
 }
