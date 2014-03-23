@@ -65,6 +65,9 @@ public class NoteActivity extends FragmentActivity {
 	private CanvasOnGestureListener mCanvasGestureListener;
 	private GestureDetector mCanvasGestureDetector;
 	private OnTouchListener mCanvasOnTouchListener;
+	private DeleteViewOnGestureListener mDeleteViewOnGestureListener;
+	private GestureDetector mDeleteViewGestureDetector;
+	private OnTouchListener mDeleteViewOnTouchListener;
 	private int mReqWidth;
 
 	/**
@@ -126,6 +129,20 @@ public class NoteActivity extends FragmentActivity {
 			public void onStartDraw() {
 				Log.d(TAG, "stop scrolling");
 				mScrollView.setScrollingEnabled(false);
+			}
+		};
+
+		// 設定刪除動作的動作
+		mDeleteViewOnGestureListener = new DeleteViewOnGestureListener();
+		mDeleteViewGestureDetector = new GestureDetector(this,
+				mDeleteViewOnGestureListener);
+		mDeleteViewOnTouchListener = new OnTouchListener() {
+
+			@Override
+			public boolean onTouch(View v, MotionEvent event) {
+				mDeleteViewOnGestureListener.setCurrentView(v);
+				mDeleteViewGestureDetector.onTouchEvent(event);
+				return false;
 			}
 		};
 
@@ -284,6 +301,7 @@ public class NoteActivity extends FragmentActivity {
 				options);
 
 		FracImageView photo = new FracImageView(this);
+		photo.setOnTouchListener(mDeleteViewOnTouchListener);
 		photo.setImageBitmap(bitmap);
 		photo.setId(generateViewId());
 		addView(photo);
@@ -451,7 +469,7 @@ public class NoteActivity extends FragmentActivity {
 			}
 		}, 50);
 	}
-	
+
 	protected void deleteView(View view) {
 		// check view id
 		int viewId = view.getId();
@@ -477,6 +495,7 @@ public class NoteActivity extends FragmentActivity {
 		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
 			Log.d(TAG, "Receive a bitmap from other activity");
 			FracImageView view = new FracImageView(this);
+			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
 			// use cached photo file if it is exists
@@ -528,14 +547,14 @@ public class NoteActivity extends FragmentActivity {
 
 		private FracCanvas mCurrentCanvas;
 		private DeleteDialogListener mDeleteCanvasListener = new DeleteDialogListener() {
-			
+
 			@Override
 			public void onDialogPositiveClick() {
 				// delete canvas
 				FracCanvas canvas = getCurrentCanvas();
 				deleteView(canvas);
 			}
-			
+
 			@Override
 			public void onDialogNegativeClick() {
 				// do nothing
@@ -568,6 +587,47 @@ public class NoteActivity extends FragmentActivity {
 
 	}
 
+	private class DeleteViewOnGestureListener extends SimpleOnGestureListener {
+
+		private View mCurrentView;
+		private DeleteDialogListener mDeleteDialogListner = new DeleteDialogListener() {
+
+			@Override
+			public void onDialogPositiveClick() {
+				View view = getCurrentView();
+				if (view != null) {
+					deleteView(view);
+				} else {
+					Log.w(TAG, "Delete null view");
+				}
+
+			}
+
+			@Override
+			public void onDialogNegativeClick() {
+				// Do nothing
+			}
+		};
+
+		public void setCurrentView(View view) {
+			mCurrentView = view;
+		}
+
+		public View getCurrentView() {
+			return mCurrentView;
+		}
+
+		@Override
+		public void onLongPress(MotionEvent event) {
+			// 跳出確認對話框
+			DeleteDialogFragment dialog = new DeleteDialogFragment();
+			dialog.setDeleteDialogListener(mDeleteDialogListner);
+			dialog.show(getSupportFragmentManager(), "delete_dialog");
+			// 如果已確認，刪除指定畫布
+			Log.d(TAG, "canvas onLongPress: " + getCurrentView().getId());
+		}
+	}
+
 	public static class DeleteDialogFragment extends DialogFragment {
 
 		private DeleteDialogListener mListener = null;
@@ -578,8 +638,7 @@ public class NoteActivity extends FragmentActivity {
 			public void onDialogNegativeClick();
 		}
 
-		public void setDeleteDialogListener(
-				DeleteDialogListener listener) {
+		public void setDeleteDialogListener(DeleteDialogListener listener) {
 			mListener = listener;
 		}
 
