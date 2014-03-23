@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import tw.edu.nutc.laalaa.note.NoteActivity.DeleteCanvasDialogFragment.DeleteCanvasDialogListener;
+import tw.edu.nutc.laalaa.note.NoteActivity.DeleteDialogFragment.DeleteDialogListener;
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
 import tw.edu.nutc.laalaa.note.utils.BitmapUtil;
@@ -527,7 +527,7 @@ public class NoteActivity extends FragmentActivity {
 	private class CanvasOnGestureListener extends SimpleOnGestureListener {
 
 		private FracCanvas mCurrentCanvas;
-		private DeleteCanvasDialogListener mDeleteCanvasListener = new DeleteCanvasDialogListener() {
+		private DeleteDialogListener mDeleteCanvasListener = new DeleteDialogListener() {
 			
 			@Override
 			public void onDialogPositiveClick() {
@@ -559,8 +559,8 @@ public class NoteActivity extends FragmentActivity {
 		@Override
 		public void onLongPress(MotionEvent event) {
 			// 跳出確認對話框
-			DeleteCanvasDialogFragment dialog = new DeleteCanvasDialogFragment();
-			dialog.setDeleteCanvasDialogListener(mDeleteCanvasListener);
+			DeleteDialogFragment dialog = new DeleteDialogFragment();
+			dialog.setDeleteDialogListener(mDeleteCanvasListener);
 			dialog.show(getSupportFragmentManager(), "delete_dialog");
 			// 如果已確認，刪除指定畫布
 			Log.d(TAG, "canvas onLongPress: " + getCurrentCanvas().getId());
@@ -568,25 +568,25 @@ public class NoteActivity extends FragmentActivity {
 
 	}
 
-	public static class DeleteCanvasDialogFragment extends DialogFragment {
+	public static class DeleteDialogFragment extends DialogFragment {
 
-		private DeleteCanvasDialogListener mListener = null;
+		private DeleteDialogListener mListener = null;
 
-		public interface DeleteCanvasDialogListener {
+		public interface DeleteDialogListener {
 			public void onDialogPositiveClick();
 
 			public void onDialogNegativeClick();
 		}
 
-		public void setDeleteCanvasDialogListener(
-				DeleteCanvasDialogListener listener) {
+		public void setDeleteDialogListener(
+				DeleteDialogListener listener) {
 			mListener = listener;
 		}
 
 		@Override
 		public Dialog onCreateDialog(Bundle savedInstanceState) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setMessage(R.string.dialog_delete_canvas)
+			builder.setMessage(R.string.dialog_delete)
 					.setPositiveButton(R.string.confirm,
 							new DialogInterface.OnClickListener() {
 
