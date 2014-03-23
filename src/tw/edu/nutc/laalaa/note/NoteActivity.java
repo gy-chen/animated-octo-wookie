@@ -154,7 +154,8 @@ public class NoteActivity extends FragmentActivity {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				mCanvasGestureListener.setCurrentCanvas((FracCanvas) v);
+				mDeleteViewOnGestureListener.setCurrentView(v);
+				mDeleteViewGestureDetector.onTouchEvent(event);
 				mCanvasGestureDetector.onTouchEvent(event);
 				return false;
 			}
@@ -271,6 +272,7 @@ public class NoteActivity extends FragmentActivity {
 		String str = new String(bytes);
 
 		FracEditText editText = new FracEditText(this);
+		editText.setOnTouchListener(mDeleteViewOnTouchListener);
 		editText.setText(str);
 		editText.setId(generateViewId());
 		addView(editText);
@@ -419,6 +421,7 @@ public class NoteActivity extends FragmentActivity {
 
 	private void newEditText() {
 		FracEditText view = new FracEditText(this);
+		view.setOnTouchListener(mDeleteViewOnTouchListener);
 		int viewId = generateViewId();
 		view.setId(viewId);
 		addView(view);
@@ -545,44 +548,10 @@ public class NoteActivity extends FragmentActivity {
 
 	private class CanvasOnGestureListener extends SimpleOnGestureListener {
 
-		private FracCanvas mCurrentCanvas;
-		private DeleteDialogListener mDeleteCanvasListener = new DeleteDialogListener() {
-
-			@Override
-			public void onDialogPositiveClick() {
-				// delete canvas
-				FracCanvas canvas = getCurrentCanvas();
-				deleteView(canvas);
-			}
-
-			@Override
-			public void onDialogNegativeClick() {
-				// do nothing
-			}
-		};
-
-		public void setCurrentCanvas(FracCanvas currentCanvas) {
-			mCurrentCanvas = currentCanvas;
-		}
-
-		public FracCanvas getCurrentCanvas() {
-			return mCurrentCanvas;
-		}
-
 		@Override
 		public boolean onSingleTapUp(MotionEvent e) {
 			toggleCanvasSettingMenu();
 			return true;
-		}
-
-		@Override
-		public void onLongPress(MotionEvent event) {
-			// 跳出確認對話框
-			DeleteDialogFragment dialog = new DeleteDialogFragment();
-			dialog.setDeleteDialogListener(mDeleteCanvasListener);
-			dialog.show(getSupportFragmentManager(), "delete_dialog");
-			// 如果已確認，刪除指定畫布
-			Log.d(TAG, "canvas onLongPress: " + getCurrentCanvas().getId());
 		}
 
 	}
