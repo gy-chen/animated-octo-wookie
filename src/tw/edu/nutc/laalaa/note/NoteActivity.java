@@ -336,8 +336,15 @@ public class NoteActivity extends Activity {
 	private void addPhotoToStorage(FracImageView view) {
 		Drawable drawable = view.getDrawable();
 		// TODO: load cached bitmap instead
-		Bitmap bitmap = convertDrawableToBitmap(drawable);
-
+		Bitmap bitmap;
+		File cachePhotoFile = mCachedPhotoFiles.get(view.getId());
+		if (cachePhotoFile != null) {
+			Log.d(TAG, "save photo from cached file");
+			bitmap = BitmapFactory.decodeFile(cachePhotoFile.getAbsolutePath());
+		} else {
+			bitmap = convertDrawableToBitmap(drawable);
+		}
+		
 		ByteArrayOutputStream output = new ByteArrayOutputStream();
 		bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
 		byte[] bytes = output.toByteArray();
