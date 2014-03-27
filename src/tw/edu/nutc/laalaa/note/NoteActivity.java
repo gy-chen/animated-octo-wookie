@@ -28,6 +28,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
@@ -258,7 +259,9 @@ public class NoteActivity extends FragmentActivity {
 				} else if (type == NoteStorage.TYPE_CANVAS) {
 					loadCanvasContent(bytes);
 				} else if (type == NoteStorage.TYPE_PHOTO) {
-					loadPhotoContent(bytes);
+					String photoPath = new String(bytes);
+					File photoFile = new File(photoPath);
+					loadPhotoContent(photoFile);
 				} else {
 					Log.w(TAG, "Unknown type: " + type);
 				}
@@ -309,6 +312,25 @@ public class NoteActivity extends FragmentActivity {
 		addView(photo);
 	}
 
+	private void loadPhotoContent(File file) {
+		Log.d(TAG, "load photo");
+
+		BitmapFactory.Options options = new BitmapFactory.Options();
+		options.inJustDecodeBounds = true;
+		BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+		options.inSampleSize = BitmapUtil.calculateInSampleWidth(options,
+				mReqWidth);
+		options.inJustDecodeBounds = false;
+		Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(),
+				options);
+
+		FracImageView photo = new FracImageView(this);
+		photo.setOnTouchListener(mDeleteViewOnTouchListener);
+		photo.setImageBitmap(bitmap);
+		photo.setId(generateViewId());
+		addView(photo);
+	}
+
 	@Override
 	public void onStop() {
 		super.onStop();
@@ -330,11 +352,11 @@ public class NoteActivity extends FragmentActivity {
 			}
 		}
 
-		// clear cached photos
-		for (int i = 0; i < mCachedPhotoFiles.size(); i++) {
-			int key = mCachedPhotoFiles.keyAt(i);
-			mCachedPhotoFiles.get(key).delete();
-		}
+		/*
+		 * // clear cached photos for (int i = 0; i < mCachedPhotoFiles.size();
+		 * i++) { int key = mCachedPhotoFiles.keyAt(i);
+		 * mCachedPhotoFiles.get(key).delete(); }
+		 */
 
 		Log.d(TAG, "onStop: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
@@ -362,22 +384,12 @@ public class NoteActivity extends FragmentActivity {
 	}
 
 	private void addPhotoToStorage(FracImageView view) {
-		Drawable drawable = view.getDrawable();
-		// TODO: load cached bitmap instead
-		Bitmap bitmap;
-		File cachePhotoFile = mCachedPhotoFiles.get(view.getId());
-		if (cachePhotoFile != null) {
-			Log.d(TAG, "save photo from cached file");
-			bitmap = BitmapFactory.decodeFile(cachePhotoFile.getAbsolutePath());
-		} else {
-			bitmap = convertDrawableToBitmap(drawable);
+		byte[] bytes;
+		File photoFile = mCachedPhotoFiles.get(view.getId());
+		if (photoFile != null) {
+			bytes = photoFile.getAbsolutePath().getBytes();
+			mNoteStorage.addNoteContent(bytes, NoteStorage.TYPE_PHOTO);
 		}
-		
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
-		bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
-		byte[] bytes = output.toByteArray();
-
-		mNoteStorage.addNoteContent(bytes, NoteStorage.TYPE_PHOTO);
 	}
 
 	private Bitmap convertDrawableToBitmap(Drawable drawable) {
@@ -446,19 +458,49 @@ public class NoteActivity extends FragmentActivity {
 
 	private void newPhoto() {
 		// start a intent for take a photo
-		Intent intent = new Intent();
-		intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
-		File cacheDir = getExternalCacheDir();
-		try {
-			mCurrentCachedFile = File.createTempFile("cachePhoto", ".jpg",
-					cacheDir);
+		File newPhotoFile = prepareNewPhotoFile();
+		if (newPhotoFile != null) {
+			Intent intent = new Intent();
+			intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+			mCurrentCachedFile = newPhotoFile;
 			intent.putExtra(MediaStore.EXTRA_OUTPUT,
 					Uri.fromFile(mCurrentCachedFile));
-		} catch (IOException e) {
-			Log.d(TAG, e.toString());
+			if (intent.resolveActivity(getPackageManager()) != null) {
+				startActivityForResult(intent, REQUEST_TAKE_PHOTO);
+			}
 		}
-		if (intent.resolveActivity(getPackageManager()) != null) {
-			startActivityForResult(intent, REQUEST_TAKE_PHOTO);
+	}
+
+	/**
+	 * 準備儲存在外部空間的相片檔
+	 * 
+	 * 當無法在外部儲存空間建立檔案時，會使用Toast顯示訊息， 並回傳null
+	 * 
+	 * @return File|null
+	 */
+	private File prepareNewPhotoFile() {
+		String state = Environment.getExternalStorageState();
+		if (Environment.MEDIA_MOUNTED.equals(state)) {
+			File storageDir = Environment
+					.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+
+			File storageFile;
+			try {
+				storageFile = File.createTempFile("image-", ".jpg", storageDir);
+			} catch (IOException e) {
+				Log.w(TAG,
+						"Cannot create external storage files: "
+								+ e.getMessage());
+				// TODO: create a Toast message
+				return null;
+			}
+			Log.d(TAG,
+					"create a external photo file: "
+							+ storageFile.getAbsolutePath());
+			return storageFile;
+		} else {
+			// TODO: create a Toast message
+			return null;
 		}
 	}
 
@@ -502,31 +544,28 @@ public class NoteActivity extends FragmentActivity {
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK
+				&& mCurrentCachedFile != null) {
 			Log.d(TAG, "Receive a bitmap from other activity");
 			FracImageView view = new FracImageView(this);
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
-			// use cached photo file if it is exists
+			
 			Bitmap imageBitmap;
-			if (mCurrentCachedFile == null) {
-				Bundle extras = data.getExtras();
-				imageBitmap = (Bitmap) extras.get("data");
-			} else {
-				// downsampling
-				final BitmapFactory.Options options = new BitmapFactory.Options();
-				options.inJustDecodeBounds = true;
-				BitmapFactory.decodeFile(mCurrentCachedFile.getAbsolutePath(),
-						options);
-				options.inSampleSize = BitmapUtil.calculateInSampleWidth(
-						options, mReqWidth);
-				options.inJustDecodeBounds = false;
-				imageBitmap = BitmapFactory.decodeFile(
-						mCurrentCachedFile.getAbsolutePath(), options);
-				mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
-				mCurrentCachedFile = null;
-			}
+			BitmapFactory.Options options = new BitmapFactory.Options();
+			options.inJustDecodeBounds = true;
+			BitmapFactory.decodeFile(mCurrentCachedFile.getAbsolutePath(),
+					options);
+			int sampleSize = BitmapUtil.calculateInSampleWidth(options,
+					mReqWidth);
+			options.inSampleSize = sampleSize;
+			options.inJustDecodeBounds = false;
+			imageBitmap = BitmapFactory.decodeFile(
+					mCurrentCachedFile.getAbsolutePath(), options);
+			mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
+			mCurrentCachedFile = null;
+			
 			view.setImageBitmap(imageBitmap);
 			addView(view);
 		}
