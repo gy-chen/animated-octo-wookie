@@ -10,7 +10,7 @@ public class NoteOpenHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = "NoteOpenHelper";
 	
-	private static final int DATABASE_VERSION = 1;
+	private static final int DATABASE_VERSION = 2;
 	private static final String DATABASE_NAME = "notes.db";
 
 	public NoteOpenHelper(Context context) {

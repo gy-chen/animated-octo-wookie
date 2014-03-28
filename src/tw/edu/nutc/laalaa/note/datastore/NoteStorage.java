@@ -1,5 +1,11 @@
 package tw.edu.nutc.laalaa.note.datastore;
 
+import java.io.DataInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -149,17 +155,9 @@ public class NoteStorage {
 	/**
 	 * 將此註記簿轉換成JSON格式
 	 * 
-	 * 輸出的JSON格式為：
-	 *   {"timestamp": 筆記簿的timestamp,
-	 *    "title": 筆記簿標題
-	 *    "content": [{ "index": 筆記順序, "content": 筆記內容, "type": 筆記種類},
-	 *     ...]
-	 *   }
-	 * 筆記種類的代表意義為：
-	 *   1: 文字
-	 *   2: 畫布
-	 *   3: 相片
-	 * 筆記內容皆用Base64轉換成ASCII可編碼內容。
+	 * 輸出的JSON格式為： {"timestamp": 筆記簿的timestamp, "title": 筆記簿標題 "content": [{
+	 * "index": 筆記順序, "content": 筆記內容, "type": 筆記種類}, ...] } 筆記種類的代表意義為： 1: 文字
+	 * 2: 畫布 3: 相片 筆記內容皆用Base64轉換成ASCII可編碼內容。
 	 * 
 	 * @return JSON字串
 	 */
@@ -169,7 +167,8 @@ public class NoteStorage {
 
 			mainJson.put(KEY_TIMESTAMP, mTimestamp);
 			String noteTitle = getTitle();
-			mainJson.put(KEY_TITLE, noteTitle == null ? JSONObject.NULL : noteTitle);
+			mainJson.put(KEY_TITLE, noteTitle == null ? JSONObject.NULL
+					: noteTitle);
 
 			JSONArray contentsJson = new JSONArray();
 			Cursor contentCursor = getNoteContents();
@@ -180,12 +179,22 @@ public class NoteStorage {
 							.getColumnIndex(NoteOpenHelper.NoteContentEntry.COLUMN_NAME_CONTENT);
 					int typeIndex = contentCursor
 							.getColumnIndex(NoteOpenHelper.NoteContentEntry.COLUMN_NAME_TYPE);
-					String type = contentCursor.getString(typeIndex);
+					int type = contentCursor.getInt(typeIndex);
 					byte[] bytes = contentCursor.getBlob(contentIndex);
 					contentJson.put(KEY_INDEX, contentCursor.getPosition());
 					contentJson.put(KEY_TYPE, type);
-					contentJson.put(KEY_CONTENT,
-							Base64.encodeToString(bytes, Base64.DEFAULT));
+					if (type == TYPE_PHOTO) {
+						byte[] output = decodePhotoFileContent(bytes);
+						if (output == null) {
+							contentJson.put(KEY_CONTENT, JSONObject.NULL);
+						} else {
+							contentJson.put(KEY_CONTENT,
+									Base64.encodeToString(output, Base64.DEFAULT));
+						}
+					} else {
+						contentJson.put(KEY_CONTENT,
+								Base64.encodeToString(bytes, Base64.DEFAULT));
+					}
 					contentsJson.put(contentJson);
 				} while (contentCursor.moveToNext());
 			}
@@ -196,6 +205,33 @@ public class NoteStorage {
 			e.printStackTrace();
 			assert false;
 			return null;
+		}
+	}
+
+	private byte[] decodePhotoFileContent(byte[] path) {
+		String filePath = new String(path);
+		File file = new File(filePath);
+		DataInputStream input = null;
+		try {
+			input = new DataInputStream(new FileInputStream(file));
+			byte[] result = new byte[(int) file.length()];
+			input.readFully(result);
+			return result;
+		} catch (FileNotFoundException e) {
+			Log.w(TAG, filePath + " not found.");
+			return null;
+		} catch (IOException e) {
+			Log.w(TAG, "cannot read " + filePath + ". " + e.getMessage());
+			return null;
+		} finally {
+			if (input != null) {
+				try {
+					input.close();
+				} catch (IOException e) {
+					Log.w(TAG,
+							"cannot close " + filePath + ". " + e.getMessage());
+				}
+			}
 		}
 	}
 }
