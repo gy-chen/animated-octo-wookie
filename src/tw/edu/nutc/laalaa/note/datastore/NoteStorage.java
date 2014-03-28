@@ -159,6 +159,8 @@ public class NoteStorage {
 	 * "index": 筆記順序, "content": 筆記內容, "type": 筆記種類}, ...] } 筆記種類的代表意義為： 1: 文字
 	 * 2: 畫布 3: 相片 筆記內容皆用Base64轉換成ASCII可編碼內容。
 	 * 
+	 * 當從相片的路徑讀取內容時發生錯誤，會以null值代替相片內容。
+	 * 
 	 * @return JSON字串
 	 */
 	public String toJSON() {

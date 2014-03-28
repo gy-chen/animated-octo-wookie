@@ -2,8 +2,9 @@ package tw.edu.nutc.laalaa.note;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import tw.edu.nutc.laalaa.note.NoteActivity.DeleteDialogFragment.DeleteDialogListener;
@@ -20,12 +21,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -237,13 +235,6 @@ public class NoteActivity extends FragmentActivity {
 		}
 	}
 
-	/*
-	 * @Override public boolean onPrepareOptionsMenu(Menu menu) {
-	 * super.onPrepareOptionsMenu(menu); menu.clear(); MenuInflater inflater =
-	 * getMenuInflater(); inflater.inflate(mMenuRes, menu); Log.d(TAG,
-	 * "onPrepareOptionsMenu"); return true; }
-	 */
-
 	private void loadNoteStorageContent() {
 		Cursor c = mNoteStorage.getNoteContents();
 		if (c.moveToFirst()) {
@@ -291,25 +282,6 @@ public class NoteActivity extends FragmentActivity {
 		canvas.setOnTouchListener(mCanvasOnTouchListener);
 		canvas.setId(generateViewId());
 		addView(canvas);
-	}
-
-	private void loadPhotoContent(byte[] bytes) {
-		Log.d(TAG, "load photo");
-
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inJustDecodeBounds = true;
-		BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
-		options.inSampleSize = BitmapUtil.calculateInSampleWidth(options,
-				mReqWidth);
-		options.inJustDecodeBounds = false;
-		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length,
-				options);
-
-		FracImageView photo = new FracImageView(this);
-		photo.setOnTouchListener(mDeleteViewOnTouchListener);
-		photo.setImageBitmap(bitmap);
-		photo.setId(generateViewId());
-		addView(photo);
 	}
 
 	private void loadPhotoContent(File file) {
@@ -392,20 +364,6 @@ public class NoteActivity extends FragmentActivity {
 		}
 	}
 
-	private Bitmap convertDrawableToBitmap(Drawable drawable) {
-		if (drawable instanceof BitmapDrawable) {
-			return ((BitmapDrawable) drawable).getBitmap();
-		}
-
-		Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-				drawable.getIntrinsicHeight(), Config.ARGB_8888);
-		Canvas canvas = new Canvas(bitmap);
-		drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-		drawable.draw(canvas);
-
-		return bitmap;
-	}
-
 	private Bitmap convertViewToBitmap(View view) {
 		Bitmap bitmap = Bitmap.createBitmap(view.getWidth(), view.getHeight(),
 				Bitmap.Config.ARGB_8888);
@@ -481,21 +439,23 @@ public class NoteActivity extends FragmentActivity {
 	private File prepareNewPhotoFile() {
 		String state = Environment.getExternalStorageState();
 		if (Environment.MEDIA_MOUNTED.equals(state)) {
-			File storageDir = Environment
-					.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+			File storageDir = new File(
+					Environment
+							.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+					"Notes");
 
-			File storageFile;
-			try {
-				storageFile = File.createTempFile("image-", ".jpg", storageDir);
-			} catch (IOException e) {
-				Log.w(TAG,
-						"Cannot create external storage files: "
-								+ e.getMessage());
-				// TODO: create a Toast message
-				return null;
+			if (!storageDir.exists()) {
+				if (!storageDir.mkdirs()) {
+					Log.w(TAG, "failed to create pictures directory");
+					// TODO: create a Toast message
+					return null;
+				}
 			}
+			File storageFile;
+			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+			storageFile = new File(storageDir, "IMG_" + timeStamp + ".jpg");
 			Log.d(TAG,
-					"create a external photo file: "
+					"make a external photo file: "
 							+ storageFile.getAbsolutePath());
 			return storageFile;
 		} else {
@@ -551,7 +511,7 @@ public class NoteActivity extends FragmentActivity {
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
-			
+
 			Bitmap imageBitmap;
 			BitmapFactory.Options options = new BitmapFactory.Options();
 			options.inJustDecodeBounds = true;
@@ -565,7 +525,7 @@ public class NoteActivity extends FragmentActivity {
 					mCurrentCachedFile.getAbsolutePath(), options);
 			mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
 			mCurrentCachedFile = null;
-			
+
 			view.setImageBitmap(imageBitmap);
 			addView(view);
 		}
