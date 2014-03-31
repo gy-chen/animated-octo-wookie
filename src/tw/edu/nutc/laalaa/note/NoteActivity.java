@@ -44,6 +44,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Toast;
 
 public class NoteActivity extends FragmentActivity {
 
@@ -447,19 +448,23 @@ public class NoteActivity extends FragmentActivity {
 			if (!storageDir.exists()) {
 				if (!storageDir.mkdirs()) {
 					Log.w(TAG, "failed to create pictures directory");
-					// TODO: create a Toast message
+					Toast.makeText(this,
+							R.string.toast_create_pictures_directory_error,
+							Toast.LENGTH_LONG);
 					return null;
 				}
 			}
 			File storageFile;
-			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+			String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss")
+					.format(new Date());
 			storageFile = new File(storageDir, "IMG_" + timeStamp + ".jpg");
 			Log.d(TAG,
 					"make a external photo file: "
 							+ storageFile.getAbsolutePath());
 			return storageFile;
 		} else {
-			// TODO: create a Toast message
+			Toast.makeText(this, R.string.toast_externalstorage_error,
+					Toast.LENGTH_LONG).show();
 			return null;
 		}
 	}

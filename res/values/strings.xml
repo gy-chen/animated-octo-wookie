@@ -8,5 +8,7 @@
     <string name="dialog_delete_canvas">是否要刪除此畫布？</string>
     <string name="confirm">確認</string>
     <string name="cancel">取消</string>
+    <string name="toast_create_pictures_directory_error">無法建立相片目錄</string>
+    <string name="toast_externalstorage_error">找不到外部儲存空間</string>
 
 </resources>
