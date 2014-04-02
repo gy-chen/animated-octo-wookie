@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import tw.edu.nutc.laalaa.note.NoteActivity.DeleteDialogFragment.DeleteDialogListener;
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
-import tw.edu.nutc.laalaa.note.utils.BitmapUtil;
 import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
+import tw.edu.nutc.laalaa.note.utils.LoadImageAsyncTask;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
@@ -288,20 +288,25 @@ public class NoteActivity extends FragmentActivity {
 	private void loadPhotoContent(File file) {
 		Log.d(TAG, "load photo");
 
-		BitmapFactory.Options options = new BitmapFactory.Options();
-		options.inJustDecodeBounds = true;
-		BitmapFactory.decodeFile(file.getAbsolutePath(), options);
-		options.inSampleSize = BitmapUtil.calculateInSampleWidth(options,
-				mReqWidth);
-		options.inJustDecodeBounds = false;
-		Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(),
-				options);
+		/*
+		 * BitmapFactory.Options options = new BitmapFactory.Options();
+		 * options.inJustDecodeBounds = true;
+		 * BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+		 * options.inSampleSize = BitmapUtil.calculateInSampleWidth(options,
+		 * mReqWidth); options.inJustDecodeBounds = false; Bitmap bitmap =
+		 * BitmapFactory.decodeFile(file.getAbsolutePath(), options);
+		 */
 
 		FracImageView photo = new FracImageView(this);
 		photo.setOnTouchListener(mDeleteViewOnTouchListener);
-		photo.setImageBitmap(bitmap);
+		photo.setImageResource(R.drawable.spinner_black_48);
+		photo.startRotateAnimation();
 		photo.setId(generateViewId());
 		addView(photo);
+
+		// start load image AsnycTask
+		LoadImageAsyncTask asyncTask = new LoadImageAsyncTask(photo, mReqWidth);
+		asyncTask.execute(file);
 	}
 
 	@Override
@@ -313,6 +318,7 @@ public class NoteActivity extends FragmentActivity {
 		// add new note contents
 		for (int viewId : mViewIds) {
 			View view = findViewById(viewId);
+			Log.d(TAG, String.format("store %s in storage", view.getId()));
 
 			if (view instanceof FracEditText) {
 				addEditTextToStorage((FracEditText) view);
@@ -324,12 +330,6 @@ public class NoteActivity extends FragmentActivity {
 				Log.w(TAG, "Unknown view type: " + view);
 			}
 		}
-
-		/*
-		 * // clear cached photos for (int i = 0; i < mCachedPhotoFiles.size();
-		 * i++) { int key = mCachedPhotoFiles.keyAt(i);
-		 * mCachedPhotoFiles.get(key).delete(); }
-		 */
 
 		Log.d(TAG, "onStop: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
@@ -512,26 +512,23 @@ public class NoteActivity extends FragmentActivity {
 		if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK
 				&& mCurrentCachedFile != null) {
 			Log.d(TAG, "Receive a bitmap from other activity");
+			// set up FracImageView
 			FracImageView view = new FracImageView(this);
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
+			
+			// set loading animation
+			view.setImageResource(R.drawable.spinner_black_48);
+			view.startRotateAnimation();
 
-			Bitmap imageBitmap;
-			BitmapFactory.Options options = new BitmapFactory.Options();
-			options.inJustDecodeBounds = true;
-			BitmapFactory.decodeFile(mCurrentCachedFile.getAbsolutePath(),
-					options);
-			int sampleSize = BitmapUtil.calculateInSampleWidth(options,
-					mReqWidth);
-			options.inSampleSize = sampleSize;
-			options.inJustDecodeBounds = false;
-			imageBitmap = BitmapFactory.decodeFile(
-					mCurrentCachedFile.getAbsolutePath(), options);
+			// load image in background
+			LoadImageAsyncTask loadImageAsyncTask = new LoadImageAsyncTask(
+					view, mReqWidth);
+			loadImageAsyncTask.execute(mCurrentCachedFile);
 			mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
 			mCurrentCachedFile = null;
 
-			view.setImageBitmap(imageBitmap);
 			addView(view);
 		}
 	}
