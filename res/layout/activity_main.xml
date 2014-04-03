@@ -65,4 +65,13 @@
         android:inflatedId="@+id/canvas_setting_view"
         android:layout="@layout/canvas_setting" />
 
+    <ViewStub
+        android:id="@+id/viewstub_trashbar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentBottom="true"
+        android:inflatedId="@+id/trashbar"
+        android:layout="@layout/trashbar" />
+
 </RelativeLayout>

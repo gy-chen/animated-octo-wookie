@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import tw.edu.nutc.laalaa.note.NoteActivity.DeleteDialogFragment.DeleteDialogListener;
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
 import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
@@ -15,9 +14,6 @@ import tw.edu.nutc.laalaa.note.utils.LoadImageAsyncTask;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -28,7 +24,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.util.SparseArray;
@@ -58,10 +53,12 @@ public class NoteActivity extends FragmentActivity {
 	private ArrayList<Integer> mViewIds = new ArrayList<Integer>();
 	private SparseArray<File> mCachedPhotoFiles = new SparseArray<File>();
 	private File mCurrentCachedFile = null;
+	private View mCurrentWorkingView;
 	private FracCanvas.OnDrawListener mOnDrawListener;
 	private NoteStorage mNoteStorage;
 	private AtomicInteger mCounter = new AtomicInteger(1); // Initial value 1
 	private View mCanvasSetting;
+	private View mTrashBar;
 	private CanvasOnGestureListener mCanvasGestureListener;
 	private GestureDetector mCanvasGestureDetector;
 	private OnTouchListener mCanvasOnTouchListener;
@@ -108,6 +105,16 @@ public class NoteActivity extends FragmentActivity {
 		toggleCanvasSettingMenu();
 	}
 
+	public void onTrashButtonClick(View view) {
+		Log.d(TAG, "Trash click!");
+		if (mCurrentWorkingView != null) {
+			deleteView(mCurrentWorkingView);
+		} else {
+			Log.w(TAG, "Current Working View is null");
+		}
+		dismissTrashBar();
+	}
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -140,7 +147,8 @@ public class NoteActivity extends FragmentActivity {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				mDeleteViewOnGestureListener.setCurrentView(v);
+				mCurrentWorkingView = v;
+				Log.d(TAG, "set current working view: " + v.getId());
 				mDeleteViewGestureDetector.onTouchEvent(event);
 				return false;
 			}
@@ -154,7 +162,6 @@ public class NoteActivity extends FragmentActivity {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
-				mDeleteViewOnGestureListener.setCurrentView(v);
 				mDeleteViewGestureDetector.onTouchEvent(event);
 				mCanvasGestureDetector.onTouchEvent(event);
 				return false;
@@ -233,6 +240,33 @@ public class NoteActivity extends FragmentActivity {
 		} else {
 			mCanvasSetting.startAnimation(AnimationUtils.loadAnimation(
 					NoteActivity.this, R.anim.fade_out));
+		}
+	}
+
+	/**
+	 * 顯示垃圾桶選單
+	 * 
+	 */
+	public void showTrashBar() {
+		if (mTrashBar == null) {
+			ViewStub viewstub = (ViewStub) findViewById(R.id.viewstub_trashbar);
+			viewstub.setVisibility(View.VISIBLE);
+			mTrashBar = findViewById(R.id.trashbar);
+			mTrashBar.setOnClickListener(new OnClickListener() {
+
+				@Override
+				public void onClick(View v) {
+					dismissTrashBar();
+				}
+			});
+		} else {
+			mTrashBar.setVisibility(View.VISIBLE);
+		}
+	}
+
+	public void dismissTrashBar() {
+		if (mTrashBar != null) {
+			mTrashBar.setVisibility(View.INVISIBLE);
 		}
 	}
 
@@ -477,6 +511,7 @@ public class NoteActivity extends FragmentActivity {
 	protected void addView(View view) {
 		mLayout.addView(view);
 		mViewIds.add(view.getId());
+		// Log.d(TAG, "view id: " + view.getId());
 		// 延遲時間讓ScrollView可滑動到底
 		mLayout.postDelayed(new Runnable() {
 
@@ -517,7 +552,7 @@ public class NoteActivity extends FragmentActivity {
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
-			
+
 			// set loading animation
 			view.setImageResource(R.drawable.spinner_black_48);
 			view.startRotateAnimation();
@@ -566,86 +601,16 @@ public class NoteActivity extends FragmentActivity {
 
 	private class DeleteViewOnGestureListener extends SimpleOnGestureListener {
 
-		private View mCurrentView;
-		private DeleteDialogListener mDeleteDialogListner = new DeleteDialogListener() {
-
-			@Override
-			public void onDialogPositiveClick() {
-				View view = getCurrentView();
-				if (view != null) {
-					deleteView(view);
-				} else {
-					Log.w(TAG, "Delete null view");
-				}
-
-			}
-
-			@Override
-			public void onDialogNegativeClick() {
-				// Do nothing
-			}
-		};
-
-		public void setCurrentView(View view) {
-			mCurrentView = view;
-		}
-
-		public View getCurrentView() {
-			return mCurrentView;
-		}
-
 		@Override
 		public void onLongPress(MotionEvent event) {
-			// 跳出確認對話框
-			DeleteDialogFragment dialog = new DeleteDialogFragment();
-			dialog.setDeleteDialogListener(mDeleteDialogListner);
-			dialog.show(getSupportFragmentManager(), "delete_dialog");
-			// 如果已確認，刪除指定畫布
-			Log.d(TAG, "canvas onLongPress: " + getCurrentView().getId());
+			// // 跳出確認對話框
+			// DeleteDialogFragment dialog = new DeleteDialogFragment();
+			// dialog.setDeleteDialogListener(mDeleteDialogListner);
+			// dialog.show(getSupportFragmentManager(), "delete_dialog");
+			// // 如果已確認，刪除指定畫布
+			// Log.d(TAG, "canvas| onLongPress: " + getCurrentView().getId());
+			showTrashBar();
 		}
 	}
 
-	public static class DeleteDialogFragment extends DialogFragment {
-
-		private DeleteDialogListener mListener = null;
-
-		public interface DeleteDialogListener {
-			public void onDialogPositiveClick();
-
-			public void onDialogNegativeClick();
-		}
-
-		public void setDeleteDialogListener(DeleteDialogListener listener) {
-			mListener = listener;
-		}
-
-		@Override
-		public Dialog onCreateDialog(Bundle savedInstanceState) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-			builder.setMessage(R.string.dialog_delete)
-					.setPositiveButton(R.string.confirm,
-							new DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									if (mListener != null) {
-										mListener.onDialogPositiveClick();
-									}
-								}
-							})
-					.setNegativeButton(R.string.cancel,
-							new DialogInterface.OnClickListener() {
-
-								@Override
-								public void onClick(DialogInterface dialog,
-										int which) {
-									if (mListener != null) {
-										mListener.onDialogNegativeClick();
-									}
-								}
-							});
-			return builder.create();
-		}
-	}
 }
