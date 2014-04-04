@@ -162,6 +162,8 @@ public class NoteActivity extends FragmentActivity {
 
 			@Override
 			public boolean onTouch(View v, MotionEvent event) {
+				mCurrentWorkingView = v;
+				Log.d(TAG, "set current working view: " + v.getId());
 				mDeleteViewGestureDetector.onTouchEvent(event);
 				mCanvasGestureDetector.onTouchEvent(event);
 				return false;
@@ -266,7 +268,7 @@ public class NoteActivity extends FragmentActivity {
 
 	public void dismissTrashBar() {
 		if (mTrashBar != null) {
-			mTrashBar.setVisibility(View.INVISIBLE);
+			mTrashBar.setVisibility(View.GONE);
 		}
 	}
 
@@ -533,6 +535,7 @@ public class NoteActivity extends FragmentActivity {
 		// remove the view from layout
 		mLayout.removeView(view);
 		mViewIds.remove(viewIndex);
+		mLayout.clearDisappearingChildren();
 		// remove cached files of that view
 		File cachedFile = mCachedPhotoFiles.get(viewId);
 		if (cachedFile != null) {
