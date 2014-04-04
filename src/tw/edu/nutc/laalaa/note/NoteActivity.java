@@ -340,6 +340,9 @@ public class NoteActivity extends FragmentActivity {
 		photo.setId(generateViewId());
 		addView(photo);
 
+		// 紀錄相片物件所使用到的檔案
+		mCachedPhotoFiles.put(photo.getId(), file);
+
 		// start load image AsnycTask
 		LoadImageAsyncTask asyncTask = new LoadImageAsyncTask(photo, mReqWidth);
 		asyncTask.execute(file);
