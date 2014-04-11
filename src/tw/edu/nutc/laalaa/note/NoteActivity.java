@@ -303,6 +303,7 @@ public class NoteActivity extends FragmentActivity {
 		String str = new String(bytes);
 
 		FracEditText editText = new FracEditText(this);
+		editText.setFocusableInTouchMode(true);
 		editText.setOnTouchListener(mDeleteViewOnTouchListener);
 		editText.setText(str);
 		editText.setId(generateViewId());
@@ -314,6 +315,7 @@ public class NoteActivity extends FragmentActivity {
 		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
 		FracCanvas canvas = new FracCanvas(this);
+		canvas.setFocusableInTouchMode(true);
 		canvas.setImageBitmap(bitmap);
 		canvas.setOnDrawListener(mOnDrawListener);
 		canvas.setOnTouchListener(mCanvasOnTouchListener);
@@ -334,6 +336,7 @@ public class NoteActivity extends FragmentActivity {
 		 */
 
 		FracImageView photo = new FracImageView(this);
+		photo.setFocusableInTouchMode(true);
 		photo.setOnTouchListener(mDeleteViewOnTouchListener);
 		photo.setImageResource(R.drawable.spinner_black_48);
 		photo.startRotateAnimation();
@@ -438,6 +441,7 @@ public class NoteActivity extends FragmentActivity {
 
 	private void newEditText() {
 		FracEditText view = new FracEditText(this);
+		view.setFocusableInTouchMode(true);
 		view.setOnTouchListener(mDeleteViewOnTouchListener);
 		int viewId = generateViewId();
 		view.setId(viewId);
@@ -446,6 +450,7 @@ public class NoteActivity extends FragmentActivity {
 
 	private void newCanvas() {
 		FracCanvas view = new FracCanvas(this);
+		view.setFocusableInTouchMode(true);
 		view.setDrawingCacheEnabled(true);
 		view.setOnDrawListener(mOnDrawListener);
 		view.setOnTouchListener(mCanvasOnTouchListener);
@@ -555,6 +560,7 @@ public class NoteActivity extends FragmentActivity {
 			Log.d(TAG, "Receive a bitmap from other activity");
 			// set up FracImageView
 			FracImageView view = new FracImageView(this);
+			view.setFocusableInTouchMode(true);
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
