@@ -62,6 +62,7 @@ public class NoteActivity extends FragmentActivity {
 	private CanvasOnGestureListener mCanvasGestureListener;
 	private GestureDetector mCanvasGestureDetector;
 	private OnTouchListener mCanvasOnTouchListener;
+	private OnClickListener mPhotoOnClickListener;
 	private DeleteViewOnGestureListener mDeleteViewOnGestureListener;
 	private GestureDetector mDeleteViewGestureDetector;
 	private OnTouchListener mDeleteViewOnTouchListener;
@@ -167,6 +168,14 @@ public class NoteActivity extends FragmentActivity {
 				mDeleteViewGestureDetector.onTouchEvent(event);
 				mCanvasGestureDetector.onTouchEvent(event);
 				return false;
+			}
+		};
+		// 避免相片被點選就產生LongPress事件
+		mPhotoOnClickListener = new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				v.cancelLongPress();
 			}
 		};
 
@@ -338,6 +347,7 @@ public class NoteActivity extends FragmentActivity {
 		FracImageView photo = new FracImageView(this);
 		photo.setFocusableInTouchMode(true);
 		photo.setOnTouchListener(mDeleteViewOnTouchListener);
+		photo.setOnClickListener(mPhotoOnClickListener);
 		photo.setImageResource(R.drawable.spinner_black_48);
 		photo.startRotateAnimation();
 		photo.setId(generateViewId());
@@ -562,6 +572,8 @@ public class NoteActivity extends FragmentActivity {
 			FracImageView view = new FracImageView(this);
 			view.setFocusableInTouchMode(true);
 			view.setOnTouchListener(mDeleteViewOnTouchListener);
+
+			view.setOnClickListener(mPhotoOnClickListener);
 			int viewId = generateViewId();
 			view.setId(viewId);
 
