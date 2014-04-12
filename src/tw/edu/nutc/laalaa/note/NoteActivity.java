@@ -24,7 +24,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.GestureDetector;
@@ -41,7 +42,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
-public class NoteActivity extends FragmentActivity {
+public class NoteActivity extends ActionBarActivity {
 
 	public final static String EXTRA_NOTE_TIMESTAMP = "timestamp";
 
@@ -120,6 +121,9 @@ public class NoteActivity extends FragmentActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_note);
+		
+		ActionBar actionBar = getSupportActionBar();
+		actionBar.setDisplayHomeAsUpEnabled(true);
 
 		// set view width
 		mReqWidth = getResources().getDisplayMetrics().widthPixels;
