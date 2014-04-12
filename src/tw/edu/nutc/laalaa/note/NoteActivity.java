@@ -119,7 +119,7 @@ public class NoteActivity extends FragmentActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
+		setContentView(R.layout.activity_note);
 
 		// set view width
 		mReqWidth = getResources().getDisplayMetrics().widthPixels;
@@ -219,9 +219,8 @@ public class NoteActivity extends FragmentActivity {
 		});
 
 		// 初始化註記資料庫
-		// initNoteStorage((new Date()).getTime());
 		initNoteStorage(getIntent().getLongExtra(EXTRA_NOTE_TIMESTAMP,
-				1393594645799l));
+				new Date().getTime()));
 		// mNoteStorage.setTitle("Demo");
 		// Log.d(TAG, "Note title: " + mNoteStorage.getTitle());
 
