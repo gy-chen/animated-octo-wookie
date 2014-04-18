@@ -276,12 +276,18 @@ public class NoteActivity extends ActionBarActivity {
 		} else {
 			mTrashBar.setVisibility(View.VISIBLE);
 		}
+		
+		// animate
+		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.abc_slide_in_bottom));
 	}
 
 	public void dismissTrashBar() {
 		if (mTrashBar != null) {
 			mTrashBar.setVisibility(View.GONE);
 		}
+		
+		// animate
+		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.abc_slide_out_bottom));
 	}
 
 	private void loadNoteStorageContent() {
