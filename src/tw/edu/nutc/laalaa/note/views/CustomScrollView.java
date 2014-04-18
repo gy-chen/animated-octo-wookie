@@ -1,4 +1,4 @@
-package tw.edu.nutc.laalaa.note.utils;
+package tw.edu.nutc.laalaa.note.views;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -13,17 +13,14 @@ public class CustomScrollView extends ScrollView {
 
 	public CustomScrollView(Context context) {
 		super(context);
-		// TODO Auto-generated constructor stub
 	}
 
 	public CustomScrollView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		// TODO Auto-generated constructor stub
 	}
 
 	public CustomScrollView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
-		// TODO Auto-generated constructor stub
 	}
 
 	public void setScrollingEnabled(boolean scrollable) {

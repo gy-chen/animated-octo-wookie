@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
 import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
-import tw.edu.nutc.laalaa.note.utils.CustomScrollView;
 import tw.edu.nutc.laalaa.note.utils.LoadImageAsyncTask;
+import tw.edu.nutc.laalaa.note.views.CustomScrollView;
 import tw.edu.nutc.laalaa.note.views.FracCanvas;
 import tw.edu.nutc.laalaa.note.views.FracEditText;
 import tw.edu.nutc.laalaa.note.views.FracImageView;
