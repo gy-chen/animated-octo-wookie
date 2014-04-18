@@ -8,8 +8,6 @@ import android.widget.ImageView;
 
 public class NoteAdatper extends BaseAdapter {
 
-	public final static int TAG_TIMESTAMP = 4416;
-	
 	private Context mContext;
 
 	public NoteAdatper(Context context) {
@@ -39,7 +37,7 @@ public class NoteAdatper extends BaseAdapter {
 			ImageView button = new ImageView(mContext);
 			button.setImageResource(android.R.drawable.btn_star);
 			button.setBackgroundResource(android.R.drawable.btn_default);
-			button.setTag(TAG_TIMESTAMP, null);
+			button.setTag(null);
 			return button;
 		}
 		// TODO 讀取NoteStorage的資料

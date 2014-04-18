@@ -26,7 +26,7 @@ public class MainActivity extends FragmentActivity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View v, int position,
 					long id) {
-				Object timestamp = v.getTag(NoteAdatper.TAG_TIMESTAMP);
+				Object timestamp = v.getTag();
 				if (timestamp == null) {
 					// TODO delete test value
 					openNote(1393594645799l);
