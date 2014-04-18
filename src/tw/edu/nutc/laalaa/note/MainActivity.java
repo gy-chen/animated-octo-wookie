@@ -28,8 +28,7 @@ public class MainActivity extends FragmentActivity {
 					long id) {
 				Object timestamp = v.getTag();
 				if (timestamp == null) {
-					// TODO delete test value
-					openNote(1393594645799l);
+					openNote(null);
 				}
 				else {
 					openNote((Long) timestamp);
@@ -37,10 +36,6 @@ public class MainActivity extends FragmentActivity {
 			}
 		});
 		
-	}
-	
-	public void onNewNoteButtonClick(View v) {
-		openNote(1393594645799l);
 	}
 	
 	private void openNote(Long timestamp) {
