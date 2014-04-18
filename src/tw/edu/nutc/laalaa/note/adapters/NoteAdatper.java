@@ -1,6 +1,11 @@
 package tw.edu.nutc.laalaa.note.adapters;
 
+import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
+import tw.edu.nutc.laalaa.note.views.NoteButtonView;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -8,16 +13,20 @@ import android.widget.ImageView;
 
 public class NoteAdatper extends BaseAdapter {
 
+	private final static String TAG = "NoteAdapter";
 	private Context mContext;
+	private NoteOpenHelper mNoteOpenHelper;
+	private Cursor mNoteCursor;
 
 	public NoteAdatper(Context context) {
 		mContext = context;
+		mNoteOpenHelper = new NoteOpenHelper(context);
 	}
 
 	@Override
 	public int getCount() {
-		// TODO 使用NoteStorage的紀錄
-		return 1;
+		Log.d(TAG, "count: " + getNoteCount());
+		return getNoteCount() + 1; // add start button
 	}
 
 	@Override
@@ -40,8 +49,57 @@ public class NoteAdatper extends BaseAdapter {
 			button.setTag(null);
 			return button;
 		}
-		// TODO 讀取NoteStorage的資料
-		return null;
+		else {
+			NoteButtonView button = new NoteButtonView(mContext);
+			// position minus 1 for the start button
+			int dbPosition = position - 1;
+			long timestamp = getNoteTimestamp(dbPosition);
+			button.setTitle(getNoteTitle(dbPosition), timestamp);
+			button.setTag(timestamp);
+			return button;
+		}
 	}
 
+	private int getNoteCount() {
+		SQLiteDatabase db = mNoteOpenHelper.getReadableDatabase();
+
+		String sql = "SELECT COUNT(*) FROM "
+				+ NoteOpenHelper.NoteEntry.TABLE_NAME;
+		Cursor c = db.rawQuery(sql, null);
+		Log.d(TAG, "column count: " + c.getColumnCount());
+		c.moveToFirst();
+		int result = c.getInt(0);
+		c.close();
+		return result;
+	}
+
+	private String getNoteTitle(int position) {
+		if (mNoteCursor == null) {
+			mNoteCursor = initNoteCursor();
+		}
+		mNoteCursor.moveToPosition(position);
+		int titleIndex = mNoteCursor.getColumnIndex(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE);
+		Log.d(TAG, "title index: " + titleIndex);
+		return mNoteCursor.getString(titleIndex);
+	}
+
+	private long getNoteTimestamp(int position) {
+		if (mNoteCursor == null) {
+			mNoteCursor = initNoteCursor();
+		}
+		mNoteCursor.moveToPosition(position);
+		int timestampIndex = mNoteCursor.getColumnIndex(NoteOpenHelper.NoteEntry._ID);
+		Log.d(TAG, "timestamp index: " + timestampIndex);
+		return mNoteCursor.getLong(timestampIndex);
+	}
+
+	private Cursor initNoteCursor() {
+		SQLiteDatabase db = mNoteOpenHelper.getReadableDatabase();
+
+		String[] columns = { NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE,
+				NoteOpenHelper.NoteEntry._ID };
+		Cursor c = db.query(NoteOpenHelper.NoteEntry.TABLE_NAME, columns, null,
+				null, null, null, null);
+		return c;
+	}
 }
