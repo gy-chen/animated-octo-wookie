@@ -37,4 +37,9 @@ public class NoteButtonView extends TextView {
 	public String getTitle() {
 		return getText().toString();
 	}
+	
+	@Override
+	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+		super.onMeasure(widthMeasureSpec, widthMeasureSpec);
+	}
 }

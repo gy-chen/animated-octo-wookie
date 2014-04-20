@@ -43,13 +43,18 @@ public class NoteAdatper extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		// 新增註記簿按鈕
 		if (position == 0) {
-			ImageView button = new ImageView(mContext);
+			ImageView button = new ImageView(mContext) {
+
+				@Override
+				protected void onMeasure(int width, int height) {
+					super.onMeasure(width, width);
+				}
+			};
 			button.setImageResource(android.R.drawable.btn_star);
 			button.setBackgroundResource(android.R.drawable.btn_default);
 			button.setTag(null);
 			return button;
-		}
-		else {
+		} else {
 			NoteButtonView button = new NoteButtonView(mContext);
 			// position minus 1 for the start button
 			int dbPosition = position - 1;
@@ -78,7 +83,8 @@ public class NoteAdatper extends BaseAdapter {
 			mNoteCursor = initNoteCursor();
 		}
 		mNoteCursor.moveToPosition(position);
-		int titleIndex = mNoteCursor.getColumnIndex(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE);
+		int titleIndex = mNoteCursor
+				.getColumnIndex(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE);
 		Log.d(TAG, "title index: " + titleIndex);
 		return mNoteCursor.getString(titleIndex);
 	}
@@ -88,7 +94,8 @@ public class NoteAdatper extends BaseAdapter {
 			mNoteCursor = initNoteCursor();
 		}
 		mNoteCursor.moveToPosition(position);
-		int timestampIndex = mNoteCursor.getColumnIndex(NoteOpenHelper.NoteEntry._ID);
+		int timestampIndex = mNoteCursor
+				.getColumnIndex(NoteOpenHelper.NoteEntry._ID);
 		Log.d(TAG, "timestamp index: " + timestampIndex);
 		return mNoteCursor.getLong(timestampIndex);
 	}
