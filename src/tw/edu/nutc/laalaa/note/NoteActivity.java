@@ -121,7 +121,7 @@ public class NoteActivity extends ActionBarActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_note);
-		
+
 		ActionBar actionBar = getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -276,18 +276,20 @@ public class NoteActivity extends ActionBarActivity {
 		} else {
 			mTrashBar.setVisibility(View.VISIBLE);
 		}
-		
+
 		// animate
-		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.abc_slide_in_bottom));
+		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this,
+				R.anim.abc_slide_in_bottom));
 	}
 
 	public void dismissTrashBar() {
 		if (mTrashBar != null) {
 			mTrashBar.setVisibility(View.GONE);
 		}
-		
+
 		// animate
-		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this, R.anim.abc_slide_out_bottom));
+		mTrashBar.startAnimation(AnimationUtils.loadAnimation(this,
+				R.anim.abc_slide_out_bottom));
 	}
 
 	private void loadNoteStorageContent() {
@@ -371,29 +373,11 @@ public class NoteActivity extends ActionBarActivity {
 	}
 
 	@Override
-	public void onStop() {
-		super.onStop();
-
-		// delete old note contents
-		mNoteStorage.deleteAllNoteContent();
-		// add new note contents
-		for (int viewId : mViewIds) {
-			View view = findViewById(viewId);
-			Log.d(TAG, String.format("store %s in storage", view.getId()));
-
-			if (view instanceof FracEditText) {
-				addEditTextToStorage((FracEditText) view);
-			} else if (view instanceof FracCanvas) {
-				addCanvasToStorage((FracCanvas) view);
-			} else if (view instanceof FracImageView) {
-				addPhotoToStorage((FracImageView) view);
-			} else {
-				Log.w(TAG, "Unknown view type: " + view);
-			}
-		}
-
-		Log.d(TAG, "onStop: saved");
-		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
+	public void onPause() {
+		super.onPause();
+		
+		// 儲存更動的註記內容
+		saveNoteContent();
 	}
 
 	private void addEditTextToStorage(FracEditText view) {
@@ -491,6 +475,29 @@ public class NoteActivity extends ActionBarActivity {
 				startActivityForResult(intent, REQUEST_TAKE_PHOTO);
 			}
 		}
+	}
+
+	private void saveNoteContent() {
+		// delete old note contents
+		mNoteStorage.deleteAllNoteContent();
+		// add new note contents
+		for (int viewId : mViewIds) {
+			View view = findViewById(viewId);
+			Log.d(TAG, String.format("store %s in storage", view.getId()));
+
+			if (view instanceof FracEditText) {
+				addEditTextToStorage((FracEditText) view);
+			} else if (view instanceof FracCanvas) {
+				addCanvasToStorage((FracCanvas) view);
+			} else if (view instanceof FracImageView) {
+				addPhotoToStorage((FracImageView) view);
+			} else {
+				Log.w(TAG, "Unknown view type: " + view);
+			}
+		}
+
+		Log.d(TAG, "onStop: saved");
+		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
 	}
 
 	/**
