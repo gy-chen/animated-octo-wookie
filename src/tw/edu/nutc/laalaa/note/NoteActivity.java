@@ -250,10 +250,10 @@ public class NoteActivity extends ActionBarActivity {
 		// animation
 		if (mCanvasSetting.getVisibility() == View.VISIBLE) {
 			mCanvasSetting.startAnimation(AnimationUtils.loadAnimation(
-					NoteActivity.this, R.anim.fade_in));
+					NoteActivity.this, R.anim.abc_slide_in_top));
 		} else {
 			mCanvasSetting.startAnimation(AnimationUtils.loadAnimation(
-					NoteActivity.this, R.anim.fade_out));
+					NoteActivity.this, R.anim.abc_slide_out_top));
 		}
 	}
 
@@ -322,11 +322,8 @@ public class NoteActivity extends ActionBarActivity {
 
 		String str = new String(bytes);
 
-		FracEditText editText = new FracEditText(this);
-		editText.setFocusableInTouchMode(true);
-		editText.setOnTouchListener(mDeleteViewOnTouchListener);
+		FracEditText editText = prepareEditText();
 		editText.setText(str);
-		editText.setId(generateViewId());
 		addView(editText);
 	}
 
@@ -334,12 +331,8 @@ public class NoteActivity extends ActionBarActivity {
 		Log.d(TAG, "load canvas");
 		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
-		FracCanvas canvas = new FracCanvas(this);
-		canvas.setFocusableInTouchMode(true);
+		FracCanvas canvas = prepareCanvas();
 		canvas.setImageBitmap(bitmap);
-		canvas.setOnDrawListener(mOnDrawListener);
-		canvas.setOnTouchListener(mCanvasOnTouchListener);
-		canvas.setId(generateViewId());
 		addView(canvas);
 	}
 
@@ -355,13 +348,9 @@ public class NoteActivity extends ActionBarActivity {
 		 * BitmapFactory.decodeFile(file.getAbsolutePath(), options);
 		 */
 
-		FracImageView photo = new FracImageView(this);
-		photo.setFocusableInTouchMode(true);
-		photo.setOnTouchListener(mDeleteViewOnTouchListener);
-		photo.setOnClickListener(mPhotoOnClickListener);
+		FracImageView photo = preparePhoto();
 		photo.setImageResource(R.drawable.spinner_black_48);
 		photo.startRotateAnimation();
-		photo.setId(generateViewId());
 		addView(photo);
 
 		// 紀錄相片物件所使用到的檔案
@@ -375,7 +364,7 @@ public class NoteActivity extends ActionBarActivity {
 	@Override
 	public void onPause() {
 		super.onPause();
-		
+
 		// 儲存更動的註記內容
 		saveNoteContent();
 	}
@@ -443,22 +432,12 @@ public class NoteActivity extends ActionBarActivity {
 	}
 
 	private void newEditText() {
-		FracEditText view = new FracEditText(this);
-		view.setFocusableInTouchMode(true);
-		view.setOnTouchListener(mDeleteViewOnTouchListener);
-		int viewId = generateViewId();
-		view.setId(viewId);
+		FracEditText view = prepareEditText();
 		addView(view);
 	}
 
 	private void newCanvas() {
-		FracCanvas view = new FracCanvas(this);
-		view.setFocusableInTouchMode(true);
-		view.setDrawingCacheEnabled(true);
-		view.setOnDrawListener(mOnDrawListener);
-		view.setOnTouchListener(mCanvasOnTouchListener);
-		int viewId = generateViewId();
-		view.setId(viewId);
+		FracCanvas view = prepareCanvas();
 		addView(view);
 	}
 
@@ -498,6 +477,36 @@ public class NoteActivity extends ActionBarActivity {
 
 		Log.d(TAG, "onStop: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
+	}
+
+	private FracEditText prepareEditText() {
+		FracEditText view = new FracEditText(this);
+		view.setFocusableInTouchMode(true);
+		view.setOnTouchListener(mDeleteViewOnTouchListener);
+		int viewId = generateViewId();
+		view.setId(viewId);
+		return view;
+	}
+
+	private FracCanvas prepareCanvas() {
+		FracCanvas view = new FracCanvas(this);
+		view.setFocusableInTouchMode(true);
+		view.setDrawingCacheEnabled(true);
+		view.setOnDrawListener(mOnDrawListener);
+		view.setOnTouchListener(mCanvasOnTouchListener);
+		int viewId = generateViewId();
+		view.setId(viewId);
+		return view;
+	}
+
+	private FracImageView preparePhoto() {
+		FracImageView view = new FracImageView(this);
+		view.setFocusableInTouchMode(true);
+		view.setOnTouchListener(mDeleteViewOnTouchListener);
+		view.setOnClickListener(mPhotoOnClickListener);
+		int viewId = generateViewId();
+		view.setId(viewId);
+		return view;
 	}
 
 	/**
@@ -585,13 +594,7 @@ public class NoteActivity extends ActionBarActivity {
 				&& mCurrentCachedFile != null) {
 			Log.d(TAG, "Receive a bitmap from other activity");
 			// set up FracImageView
-			FracImageView view = new FracImageView(this);
-			view.setFocusableInTouchMode(true);
-			view.setOnTouchListener(mDeleteViewOnTouchListener);
-
-			view.setOnClickListener(mPhotoOnClickListener);
-			int viewId = generateViewId();
-			view.setId(viewId);
+			FracImageView view = preparePhoto();
 
 			// set loading animation
 			view.setImageResource(R.drawable.spinner_black_48);
@@ -601,7 +604,7 @@ public class NoteActivity extends ActionBarActivity {
 			LoadImageAsyncTask loadImageAsyncTask = new LoadImageAsyncTask(
 					view, mReqWidth);
 			loadImageAsyncTask.execute(mCurrentCachedFile);
-			mCachedPhotoFiles.put(viewId, mCurrentCachedFile);
+			mCachedPhotoFiles.put(view.getId(), mCurrentCachedFile);
 			mCurrentCachedFile = null;
 
 			addView(view);
