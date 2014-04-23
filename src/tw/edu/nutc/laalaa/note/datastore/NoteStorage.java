@@ -33,6 +33,8 @@ public class NoteStorage {
 	public final static int TYPE_CANVAS = 2;
 	public final static int TYPE_PHOTO = 3;
 
+	public final static int ENVIROMENT_KEY_TITLE = 1;
+
 	private final static String KEY_TIMESTAMP = "timestamp";
 	private final static String KEY_TITLE = "title";
 	private final static String KEY_CONTENTS = "contents";
@@ -56,11 +58,12 @@ public class NoteStorage {
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
 		ContentValues values = new ContentValues();
-		values.put(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE, title);
+		values.put(NoteOpenHelper.NoteMetaEntry._ID, ENVIROMENT_KEY_TITLE);
+		values.put(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_NOTE_ID, mTimestamp);
+		values.put(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT, title);
 
-		db.update(NoteOpenHelper.NoteEntry.TABLE_NAME, values,
-				NoteOpenHelper.NoteEntry._ID + " = ?", new String[] { ""
-						+ mTimestamp });
+		db.insertWithOnConflict(NoteOpenHelper.NoteMetaEntry.TABLE_NAME, null,
+				values, SQLiteDatabase.CONFLICT_REPLACE);
 	}
 
 	/**
@@ -70,17 +73,29 @@ public class NoteStorage {
 	 */
 	public String getTitle() {
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
-		String[] projection = { NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE };
-		String where = NoteOpenHelper.NoteEntry._ID + " = ?";
-		String[] whereArgs = { "" + mTimestamp };
-		Cursor c = db.query(NoteOpenHelper.NoteEntry.TABLE_NAME, projection,
-				where, whereArgs, null, null, null, null);
-		c.moveToFirst();
-		int titleIndex = c
-				.getColumnIndexOrThrow(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE);
-		return c.getString(titleIndex);
+		String[] projection = { NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT };
+		String where = NoteOpenHelper.NoteMetaEntry._ID + " = ? AND "
+				+ NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_NOTE_ID + " = ?";
+		String[] whereArgs = { "" + ENVIROMENT_KEY_TITLE, "" + mTimestamp };
+		Cursor c = db.query(NoteOpenHelper.NoteMetaEntry.TABLE_NAME,
+				projection, where, whereArgs, null, null, null, null);
+		if (c.getCount() != 0) {
+			c.moveToFirst();
+			int titleIndex = c
+					.getColumnIndexOrThrow(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT);
+			byte[] blob = c.getBlob(titleIndex);
+			return new String(blob);
+		} else {
+			return null;
+		}
 	}
 
+	/**
+	 * 新增此註記簿的註記內容
+	 * 
+	 * @param bytes
+	 * @param type 註記種類
+	 */
 	public void addNoteContent(byte[] bytes, int type) {
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
@@ -93,6 +108,11 @@ public class NoteStorage {
 		db.insert(NoteOpenHelper.NoteContentEntry.TABLE_NAME, null, values);
 	}
 
+	/**
+	 * 取得此註記簿的註記內容
+	 * 
+	 * @return
+	 */
 	public Cursor getNoteContents() {
 		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
 		String[] projection = {
@@ -134,9 +154,9 @@ public class NoteStorage {
 	}
 
 	/**
-	 * 實際建立筆記簿
+	 * 實際建立註記簿
 	 * 
-	 * 如果筆記簿已經存在，則此操作不會有什麼影響
+	 * 如果註記簿已經存在，則此操作不會有什麼影響
 	 */
 	public void createNote() {
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
@@ -190,8 +210,8 @@ public class NoteStorage {
 						if (output == null) {
 							contentJson.put(KEY_CONTENT, JSONObject.NULL);
 						} else {
-							contentJson.put(KEY_CONTENT,
-									Base64.encodeToString(output, Base64.DEFAULT));
+							contentJson.put(KEY_CONTENT, Base64.encodeToString(
+									output, Base64.DEFAULT));
 						}
 					} else {
 						contentJson.put(KEY_CONTENT,

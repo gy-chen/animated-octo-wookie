@@ -9,8 +9,8 @@ import android.util.Log;
 public class NoteOpenHelper extends SQLiteOpenHelper {
 
 	private static final String TAG = "NoteOpenHelper";
-	
-	private static final int DATABASE_VERSION = 2;
+
+	private static final int DATABASE_VERSION = 3;
 	private static final String DATABASE_NAME = "notes.db";
 
 	public NoteOpenHelper(Context context) {
@@ -20,6 +20,14 @@ public class NoteOpenHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL("CREATE TABLE Note (_id TIMESTAMP NOT NULL PRIMARY KEY, title VARCHAR(45));");
+		db.execSQL("CREATE TABLE " + NoteMetaEntry.TABLE_NAME + " (" + NoteMetaEntry._ID
+				+ " INTEGER NOT NULL, " + NoteMetaEntry.COLUMN_NAME_NOTE_ID
+				+ " INTEGER NOT NULL, " + NoteMetaEntry.COLUMN_NAME_CONTENT
+				+ " BLOB, PRIMARY KEY (" + NoteMetaEntry._ID + ", "
+				+ NoteMetaEntry.COLUMN_NAME_NOTE_ID + "), FOREIGN KEY ("
+				+ NoteMetaEntry.COLUMN_NAME_NOTE_ID + ") REFERENCES "
+				+ NoteEntry.TABLE_NAME + "(" + NoteEntry._ID
+				+ ") ON DELETE CASCADE ON UPDATE CASCADE)");
 		db.execSQL("CREATE TABLE NoteContent (_id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, content BLOB NOT NULL, type INT NOT NULL, note_id TIMESTAMP NOT NULL, FOREIGN KEY (note_id) REFERENCES Note (_id) ON DELETE CASCADE ON UPDATE CASCADE);");
 	}
 
@@ -39,9 +47,15 @@ public class NoteOpenHelper extends SQLiteOpenHelper {
 
 	public abstract static class NoteEntry implements BaseColumns {
 		public final static String TABLE_NAME = "Note";
-		public final static String COLUMN_NAME_TITLE = "title"; 
+		public final static String COLUMN_NAME_TITLE = "title";
 	}
-	
+
+	public abstract static class NoteMetaEntry implements BaseColumns {
+		public final static String TABLE_NAME = "NoteMeta";
+		public final static String COLUMN_NAME_NOTE_ID = "note_id";
+		public final static String COLUMN_NAME_CONTENT = "content";
+	}
+
 	public abstract static class NoteContentEntry implements BaseColumns {
 		public final static String TABLE_NAME = "NoteContent";
 		public final static String COLUMN_NAME_CONTENT = "content";

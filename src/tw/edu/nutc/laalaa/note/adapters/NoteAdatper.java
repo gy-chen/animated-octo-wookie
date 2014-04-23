@@ -1,6 +1,7 @@
 package tw.edu.nutc.laalaa.note.adapters;
 
 import tw.edu.nutc.laalaa.note.datastore.NoteOpenHelper;
+import tw.edu.nutc.laalaa.note.datastore.NoteStorage;
 import tw.edu.nutc.laalaa.note.views.NoteButtonView;
 import android.content.Context;
 import android.database.Cursor;
@@ -83,10 +84,12 @@ public class NoteAdatper extends BaseAdapter {
 			mNoteCursor = initNoteCursor();
 		}
 		mNoteCursor.moveToPosition(position);
-		int titleIndex = mNoteCursor
-				.getColumnIndex(NoteOpenHelper.NoteEntry.COLUMN_NAME_TITLE);
-		Log.d(TAG, "title index: " + titleIndex);
-		return mNoteCursor.getString(titleIndex);
+		int timestampIndex = mNoteCursor
+				.getColumnIndex(NoteOpenHelper.NoteEntry._ID);
+		long timestamp = mNoteCursor.getLong(timestampIndex);
+
+		NoteStorage storage = new NoteStorage(mContext, timestamp);
+		return storage.getTitle();
 	}
 
 	private long getNoteTimestamp(int position) {
