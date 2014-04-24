@@ -474,8 +474,11 @@ public class NoteActivity extends ActionBarActivity {
 				Log.w(TAG, "Unknown view type: " + view);
 			}
 		}
+		// save snapshot
+		Bitmap snapshot = convertViewToBitmap(mLayout);
+		mNoteStorage.setSnapshot(snapshot);
 
-		Log.d(TAG, "onStop: saved");
+		Log.d(TAG, "onPause: saved");
 		Log.d(TAG, "saved contents json: " + mNoteStorage.toJSON());
 	}
 

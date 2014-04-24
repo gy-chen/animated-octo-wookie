@@ -1,5 +1,6 @@
 package tw.edu.nutc.laalaa.note.datastore;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,6 +15,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Base64;
 import android.util.Log;
 
@@ -34,6 +37,7 @@ public class NoteStorage {
 	public final static int TYPE_PHOTO = 3;
 
 	public final static int ENVIROMENT_KEY_TITLE = 1;
+	public final static int ENVIROMENT_KEY_SNAPSHOT = 2;
 
 	private final static String KEY_TIMESTAMP = "timestamp";
 	private final static String KEY_TITLE = "title";
@@ -90,11 +94,47 @@ public class NoteStorage {
 		}
 	}
 
+	public void setSnapshot(Bitmap bitmap) {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		bitmap.compress(Bitmap.CompressFormat.PNG, 80, output);
+
+		SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+		ContentValues values = new ContentValues();
+		values.put(NoteOpenHelper.NoteMetaEntry._ID, ENVIROMENT_KEY_SNAPSHOT);
+		values.put(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_NOTE_ID, mTimestamp);
+		values.put(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT,
+				output.toByteArray());
+
+		db.insertWithOnConflict(NoteOpenHelper.NoteMetaEntry.TABLE_NAME, null,
+				values, SQLiteDatabase.CONFLICT_REPLACE);
+	}
+
+	public Bitmap getSnapshot() {
+		SQLiteDatabase db = mOpenHelper.getReadableDatabase();
+		String[] projection = { NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT };
+		String where = NoteOpenHelper.NoteMetaEntry._ID + " = ? AND "
+				+ NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_NOTE_ID + " = ?";
+		String[] whereArgs = { Integer.toString(ENVIROMENT_KEY_SNAPSHOT),
+				Long.toString(mTimestamp) };
+		Cursor c = db.query(NoteOpenHelper.NoteMetaEntry.TABLE_NAME,
+				projection, where, whereArgs, null, null, null);
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			int contentIndex = c
+					.getColumnIndex(NoteOpenHelper.NoteMetaEntry.COLUMN_NAME_CONTENT);
+			byte[] content = c.getBlob(contentIndex);
+			return BitmapFactory.decodeByteArray(content, 0, content.length);
+		} else {
+			return null;
+		}
+	}
+
 	/**
 	 * 新增此註記簿的註記內容
 	 * 
 	 * @param bytes
-	 * @param type 註記種類
+	 * @param type
+	 *            註記種類
 	 */
 	public void addNoteContent(byte[] bytes, int type) {
 		SQLiteDatabase db = mOpenHelper.getWritableDatabase();

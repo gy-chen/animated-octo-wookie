@@ -6,6 +6,7 @@ import tw.edu.nutc.laalaa.note.views.NoteButtonView;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,8 +60,12 @@ public class NoteAdatper extends BaseAdapter {
 			NoteButtonView button = new NoteButtonView(mContext);
 			// position minus 1 for the start button
 			int dbPosition = position - 1;
+			button.setTitle(getNoteTitle(dbPosition));
+			Bitmap snapshot = getNoteSnapshot(dbPosition);
+			if (snapshot != null) {
+				button.setSnapshot(snapshot);
+			}
 			long timestamp = getNoteTimestamp(dbPosition);
-			button.setTitle(getNoteTitle(dbPosition), timestamp);
 			button.setTag(timestamp);
 			return button;
 		}
@@ -90,6 +95,19 @@ public class NoteAdatper extends BaseAdapter {
 
 		NoteStorage storage = new NoteStorage(mContext, timestamp);
 		return storage.getTitle();
+	}
+
+	private Bitmap getNoteSnapshot(int position) {
+		if (mNoteCursor == null) {
+			mNoteCursor = initNoteCursor();
+		}
+		mNoteCursor.moveToPosition(position);
+		int timestampIndex = mNoteCursor
+				.getColumnIndex(NoteOpenHelper.NoteEntry._ID);
+		long timestamp = mNoteCursor.getLong(timestampIndex);
+
+		NoteStorage storage = new NoteStorage(mContext, timestamp);
+		return storage.getSnapshot();
 	}
 
 	private long getNoteTimestamp(int position) {
