@@ -36,14 +36,13 @@ public class FracCanvas extends ImageView {
 	private final LinkedList<Path> mPaths = new LinkedList<Path>();
 	private final LinkedList<Paint> mPaints = new LinkedList<Paint>(); // Store
 																		// paints
-																		// that
-																		// map
-																		// to
-																		// paths
 	private Path mCurrentPath = null;
 	private RectF mBounds;
 	private boolean mIsDrawing = false;
 	private OnDrawListener mOnDrawListener;
+	// canvas's height
+	// set default height
+	private int mHeightInPixels = getResources().getDisplayMetrics().heightPixels / 4;
 
 	private static Paint mPaint;
 
@@ -75,6 +74,7 @@ public class FracCanvas extends ImageView {
 		BLACK_PAINT.setColor(Color.BLACK);
 
 		mPaint = BLACK_PAINT;
+
 	}
 
 	public FracCanvas(Context context) {
@@ -181,6 +181,12 @@ public class FracCanvas extends ImageView {
 		return true;
 	}
 
+	public void setHeight(int pixel) {
+		mHeightInPixels = pixel;
+		// measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+		requestLayout();
+	}
+
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -188,8 +194,8 @@ public class FracCanvas extends ImageView {
 				getMeasuredHeight()));
 		Log.d(TAG, String.format("view size: (%d, %d", getWidth(), getHeight()));
 
-		setMeasuredDimension(getMeasuredWidth(), getResources()
-				.getDisplayMetrics().heightPixels / 4);
+		setMeasuredDimension(getMeasuredWidth(),
+				Math.max(mHeightInPixels, getMeasuredHeight()));
 	}
 
 	@Override

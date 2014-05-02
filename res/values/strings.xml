@@ -3,6 +3,7 @@
 
     <string name="app_name">Note</string>
     <string name="action_settings">Settings</string>
+    <string name="action_rename">重新命名</string>
     <string name="hello_world">Hello world!</string>
     <string name="dialog_delete">是否要刪除此物件？</string>
     <string name="dialog_delete_canvas">是否要刪除此畫布？</string>

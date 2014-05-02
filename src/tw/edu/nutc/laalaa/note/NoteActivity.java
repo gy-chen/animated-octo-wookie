@@ -38,6 +38,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewStub;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Toast;
@@ -218,7 +219,23 @@ public class NoteActivity extends ActionBarActivity {
 
 			@Override
 			public void onClick(View v) {
-				toggleCanvasSettingMenu();
+				if (mViewIds.size() > 0) {
+					int lastViewId = mViewIds.get(mViewIds.size() - 1);
+					View lastView = findViewById(lastViewId);
+					if (lastView instanceof FracCanvas) {
+						FracCanvas lastCanvas = (FracCanvas) lastView;
+						Log.d(TAG, "set height: " + lastCanvas.getHeight() * 2);
+						lastCanvas.setHeight(lastCanvas.getHeight()
+								+ (getResources().getDisplayMetrics().heightPixels / 4));
+						mScrollView.postDelayed(new Runnable() {
+
+							@Override
+							public void run() {
+								mScrollView.fullScroll(ScrollView.FOCUS_DOWN);
+							}
+						}, 50);
+					}
+				}
 			}
 		});
 
@@ -332,6 +349,9 @@ public class NoteActivity extends ActionBarActivity {
 		Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 
 		FracCanvas canvas = prepareCanvas();
+		Log.d(TAG,
+				String.format("bitmap size (%d, %d}", bitmap.getWidth(),
+						bitmap.getHeight()));
 		canvas.setImageBitmap(bitmap);
 		addView(canvas);
 	}
@@ -475,7 +495,7 @@ public class NoteActivity extends ActionBarActivity {
 			}
 		}
 		// save snapshot
-		Bitmap snapshot = convertViewToBitmap(mLayout);
+		Bitmap snapshot = convertViewToBitmap(mScrollView);
 		mNoteStorage.setSnapshot(snapshot);
 
 		Log.d(TAG, "onPause: saved");
@@ -497,6 +517,7 @@ public class NoteActivity extends ActionBarActivity {
 		view.setDrawingCacheEnabled(true);
 		view.setOnDrawListener(mOnDrawListener);
 		view.setOnTouchListener(mCanvasOnTouchListener);
+		view.setScaleType(ImageView.ScaleType.FIT_START);
 		int viewId = generateViewId();
 		view.setId(viewId);
 		return view;
@@ -631,7 +652,7 @@ public class NoteActivity extends ActionBarActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.note, menu);
 		return true;
 	}
 
